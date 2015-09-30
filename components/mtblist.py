@@ -3,7 +3,7 @@ class ListNode(object):
 	def __init__(self, value, prevNode, nextNode):
 		self.value = value
 		self.prevNode = prevNode
-		self.nextnode = nextNode
+		self.nextNode = nextNode
 
 	def getValue(self):
 		return self.value
