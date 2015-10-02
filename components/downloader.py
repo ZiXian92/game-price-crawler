@@ -23,15 +23,29 @@ class Downloader(object):
 			s.connect((req.getHeader("Host"), 80))
 			s.send(str(req))
 			res = s.recv(2048)
-			fragments = res.split("\r\n\r\n", 1);
-			resHeader = fragments[0];
-			if resHeader.startswith("HTTP/1.1 200 OK"):
-				res = fragments[1];
-				f = open(url, 'w')
-				while res!="":
-					f.write(res)
-					res = s.recv(2048)
-				f.close()
+
+			# Process response only if status is 200 OK
+			if res.startswith("HTTP/1.1 200 OK"):
+
+				# Find end of response header
+				while res.find("\r\n\r\n")==-1:
+					res = res[len(res)-3:]+s.recv(2048)
+
+				# Get start of response body
+				res = res.split("\r\n\r\n")[1]
+
+				# Boundary case where string ends with \r\n\r\n
+				# and response body is still in socket buffer
+				if res=="":
+					res = s.recv(2048)	# Second chance
+
+				# Write to file if response body is not empty
+				if res!="":
+					f = open(url, 'w')
+					while res!="":
+						f.write(res)
+						res = s.recv(2048)
+					f.close()
 		except:
 			print "Unable to fetch resource %s" % (url)
 		s.close()
