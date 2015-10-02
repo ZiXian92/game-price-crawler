@@ -21,13 +21,17 @@ class Downloader(object):
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
 			s.connect((req.getHeader("Host"), 80))
-			f = open(url, 'w')
 			s.send(str(req))
 			res = s.recv(2048)
-			while res!="":
-				f.write(res)
-				res = s.recv(2048)
-			f.close()
+			fragments = res.split("\r\n\r\n", 1);
+			resHeader = fragments[0];
+			if resHeader.startswith("HTTP/1.1 200 OK"):
+				res = fragments[1];
+				f = open(url, 'w')
+				while res!="":
+					f.write(res)
+					res = s.recv(2048)
+				f.close()
 		except:
 			print "Unable to fetch resource %s" % (url)
 		s.close()
