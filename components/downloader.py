@@ -1,4 +1,4 @@
-import socket
+import socket, ssl
 from threading import Thread, BoundedSemaphore
 from httprequest import HttpRequests
 
@@ -20,7 +20,13 @@ class Downloader(object):
 		req = HttpRequests.get(url, {"Connection": "close", "User-Agent": "game-price-crawler"})
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
-			s.connect((req.getHeader("Host"), 80))
+			if req.getProtocol()=="HTTPS/1.1":
+				s = ssl.wrap_socket(s)
+				s.connect((req.getHeader("Host"), 443))
+				s.do_handshake()
+			else:
+				s.connect((req.getHeader("Host"), 80))
+
 			s.send(str(req))
 			res = s.recv(2048)
 
@@ -41,7 +47,8 @@ class Downloader(object):
 
 				# Write to file if response body is not empty
 				if res!="":
-					f = open(url, 'w')
+					filename = (req.getHeader("Host")+req.getPath()).replace("/", "_")
+					f = open(filename, 'w')
 					while res!="":
 						f.write(res)
 						res = s.recv(2048)
