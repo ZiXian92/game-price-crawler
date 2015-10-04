@@ -21,39 +21,71 @@ class Downloader(object):
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
 			if req.getProtocol()=="HTTPS/1.1":
+				print "%s: Using TLS socket" % (url)
 				s = ssl.wrap_socket(s)
+				print "%s: Connecting to port 443" % (url)
 				s.connect((req.getHeader("Host"), 443))
+				print "%s: Doing handshake over TLS" % (url)
 				s.do_handshake()
 			else:
+				print "%s: Connecting to port 80" % (url)
 				s.connect((req.getHeader("Host"), 80))
 
+			print "%s: Sending request" % (url)
 			s.send(str(req))
-			res = s.recv(2048)
+			fp = s.makefile('r', 2048)
+			res = ""
+			line = fp.readline()
+			while line!="\r\n" and line!="":
+				res+=line
+				line = fp.readline()
+			res+=line
 
-			# Process response only if status is 200 OK
-			if res.startswith("HTTP/1.1 200 OK"):
+			headers = Downloader.convertToHeaderObject(res)
+			print "%s: %d %s" % (url, headers["statusCode"], headers["statusMessage"])
 
-				# Find end of response header
-				while res.find("\r\n\r\n")==-1:
-					res = res[len(res)-3:]+s.recv(2048)
-
-				# Get start of response body
-				res = res.split("\r\n\r\n")[1]
-
-				# Boundary case where string ends with \r\n\r\n
-				# and response body is still in socket buffer
-				if res=="":
-					res = s.recv(2048)	# Second chance
-
-				# Write to file if response body is not empty
+			if headers["statusCode"]==200:
+				res = fp.readline()
 				if res!="":
+					print "%s: Downloading HTML" % (url)
 					filename = (req.getHeader("Host")+req.getPath()).replace("/", "_")
 					f = open(filename, 'w')
 					while res!="":
 						f.write(res)
-						res = s.recv(2048)
+						res = fp.readline()
 					f.close()
+				else:
+					print "%s: No content to download" % (url)
+			elif headers.get("Location")!=None:
+				print "%s: Redirecting to %s" % (url, headers["Location"])
+				fp.close()
+				s.close()
+				self.privateDownload(headers["Location"])
+				return
+			fp.close()
 		except:
 			print "Unable to fetch resource %s" % (url)
 		s.close()
 		self.resourcePool.release()
+
+	# s must be a properly formatted HTTP response header string,
+	# each line ending with CRLF and the header ending with CRLF after the last line.
+	@staticmethod
+	def convertToHeaderObject(s):
+		obj = {}
+		sidx = s.find(" ")+1
+		eidx = s.find(" ", sidx)
+		obj['statusCode'] = int(s[sidx:eidx])
+		sidx = eidx+1
+		eidx = s.find("\r\n", sidx)
+		obj['statusMessage'] = s[sidx:eidx]
+		sidx = eidx+2
+		eidx = s.find("\r\n", sidx)
+		while eidx!=sidx:
+			l = s[sidx:eidx]
+			header = l[:l.find(":")]
+			value = l[l.find(": ")+2:]
+			obj[header] = value
+			sidx = eidx+2
+			eidx = s.find("\r\n", sidx)
+		return obj
