@@ -9,56 +9,33 @@ class Classifier(object):
                             'PSP', 'PS Vita', 'PC']))
 
   def __init__(self):
-    self.data = {}
+    pass
 
   def classify(self, page):
     title = str(page.title)
     if "Rakuten" in title:
-      return self.getPriceRakuten(page)
-    elif "GameTrader" in title:
-      return self.getPriceGametrader(page)
+      return RakutenPage(page).getInfo()
 
-  # if its Rakuten's product page
-  def getPriceRakuten(self, page):
-    # determine if its a product page
-    if len(page.find_all(attrs={"property":"og:type"})) == 0:
+    elif "GameTrader" in title:
+      return GametraderPage(page).getInfo()
+
+class RakutenPage(object):
+
+  def __init__(self, page):
+    self.page = page
+    self.data = {}
+
+  def getInfo(self):
+    if len(self.page.find_all(attrs={"property":"og:type"})) == 0:
       print self.data
       return self.data
 
     # looking into javascript contents
-    scriptContent = str(page.script.string)
+    scriptContent = str(self.page.script.string)
     self.data['price'] = self._rakutenGetPrice(scriptContent)
     self.data['name'] = self._rakutenGetName(scriptContent)
     self.data['platform'] = self._rakutenGetPlatform(self.data['name']) # platform
 
-    print self.data
-    return self.data
-
-  def getPriceGametrader(self, page):
-    # determine if product page
-    # try:
-    gameInfo = page.select('table[cellpadding="2"] > tr')
-    if self._gametraderGetTitleTag(gameInfo) == "Title":
-      self.data['name'] = self._gametraderGetName(gameInfo)
-      shortenedInfoList = gameInfo[2:5]
-
-      for (count, info) in enumerate(shortenedInfoList):
-        infoHtml = info.contents # Price: 320.00 or Plat: Xbox
-
-        if count == 0:
-          self.data['platform'] = self._gametraderGetPlatOrStatus(infoHtml)
-
-        elif count == 1:
-          self.data['price'] = self._gametraderGetPrice(infoHtml)[2:] # remove dollar sign
-
-        elif count == 2:
-          self.data['status'] = self._gametraderGetPlatOrStatus(infoHtml)
-
-    else:
-      print "else This is not a Gametrader product page - "
-    # except:
-    #  print "This is not a Gametrader product page - "
-    #  print sys.exc_info()[0]
     print self.data
     return self.data
 
@@ -84,6 +61,40 @@ class Classifier(object):
       return m.group(0)
     else:
       return None
+
+class GametraderPage(object):
+
+  def __init__(self, page):
+    self.page = page
+    self.data = {}
+
+  def getInfo(self):
+    # determine if product page
+    # try:
+    gameInfo = self.page.select('table[cellpadding="2"] > tr')
+    if self._gametraderGetTitleTag(gameInfo) == "Title":
+      self.data['name'] = self._gametraderGetName(gameInfo)
+      shortenedInfoList = gameInfo[2:5]
+
+      for (count, info) in enumerate(shortenedInfoList):
+        infoHtml = info.contents # Price: 320.00 or Plat: Xbox
+
+        if count == 0:
+          self.data['platform'] = self._gametraderGetPlatOrStatus(infoHtml)
+
+        elif count == 1:
+          self.data['price'] = self._gametraderGetPrice(infoHtml)[2:] # remove dollar sign
+
+        elif count == 2:
+          self.data['status'] = self._gametraderGetPlatOrStatus(infoHtml)
+
+    else:
+      print "else This is not a Gametrader product page - "
+    # except:
+    #  print "This is not a Gametrader product page - "
+    #  print sys.exc_info()[0]
+    print self.data
+    return self.data
 
   @staticmethod
   def _gametraderGetTitleTag(gameInfo):
