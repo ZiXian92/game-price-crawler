@@ -17,18 +17,18 @@ class Downloader(object):
 
 	# Private
 	def privateDownload(self, url):
-		req = HttpRequests.get(url, {"Connection": "close", "User-Agent": "game-price-crawler"})
+		req = HttpRequests.get(url, {"Connection": "close", "User-Agent": "game-price-crawler", "Accept": "text/html"})
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
-			if req.getProtocol()=="HTTPS/1.1":
-				print "%s: Using TLS socket" % (url)
+			if req.isSecureProtocol():
+				# print "%s: Using TLS socket" % (url)
 				s = ssl.wrap_socket(s)
-				print "%s: Connecting to port 443" % (url)
+				# print "%s: Connecting to port 443" % (url)
 				s.connect((req.getHeader("Host"), 443))
-				print "%s: Doing handshake over TLS" % (url)
+				# print "%s: Doing handshake over TLS" % (url)
 				s.do_handshake()
 			else:
-				print "%s: Connecting to port 80" % (url)
+				# print "%s: Connecting to port 80" % (url)
 				s.connect((req.getHeader("Host"), 80))
 
 			print "%s: Sending request" % (url)
@@ -54,6 +54,7 @@ class Downloader(object):
 						f.write(res)
 						res = fp.readline()
 					f.close()
+					print "%s: Download complete" % (url)
 				else:
 					print "%s: No content to download" % (url)
 			elif headers.get("Location")!=None:
@@ -63,7 +64,8 @@ class Downloader(object):
 				self.privateDownload(headers["Location"])
 				return
 			fp.close()
-		except:
+		except Exception as e:
+			print str(e)
 			print "Unable to fetch resource %s" % (url)
 		s.close()
 		self.resourcePool.release()

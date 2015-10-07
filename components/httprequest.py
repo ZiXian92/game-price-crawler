@@ -12,17 +12,18 @@ class HttpRequests(object):
 # Defines an abstract Http request object
 class HttpRequest:
 	__metaclass__ = ABCMeta
+	protocol = "HTTP/1.1"
 
 	# url: The URL string
 	# headers(Optional): Dictionary of header name string to header value string
 	def __init__(self, url, headers={}):
 		if url==None:
 			self.uri = headers["Host"] = ""
-			self.protocol = "HTTP/1.1"
+			self.isHttps = false
 		else:
 			self.uri = HttpRequest.getUriFromUrl(url)
 			headers["Host"] = HttpRequest.getHostFromUrl(url)
-			self.protocol = HttpRequest.getProtocolFromUrl(url)
+			self.isHttps = url.startswith("https://")
 		headers["User-Agent"] = "zxhttprequest" if headers.get("User-Agent")==None else headers["User-Agent"]
 		headers["Accept"] = "*/*" if headers.get("Accept")==None else headers["Accept"]
 		self.headers = headers
@@ -38,16 +39,6 @@ class HttpRequest:
 		queryIndex = endIndex if queryIndex==-1 else queryIndex
 		endIndex = queryIndex if queryIndex<endIndex else endIndex
 		return url[startIndex: endIndex]
-
-	# Gets the request protocol from the given URL
-	# Returns either "HTTP/1.1 or HTTPS/1.1"
-	@staticmethod
-	def getProtocolFromUrl(url):
-		endIndex = url.find("://")
-		if endIndex==-1:
-			return "HTTP/1.1"
-		protocol = url[0:endIndex]
-		return "HTTPS/1.1" if protocol=="https" else "HTTP/1.1"
 
 	# Gets the resource path from the given URL
 	@staticmethod
@@ -66,9 +57,9 @@ class HttpRequest:
 	def getHeader(self, headername):
 		return self.headers.get(headername)
 
-	# Returns the HTTP protocol used in this request
-	def getProtocol(self):
-		return self.protocol
+	# Returns whether this request is HTTPS
+	def isSecureProtocol(self):
+		return self.isHttps
 
 	# Returns the resource path of this request
 	def getPath(self):
@@ -79,9 +70,12 @@ class HttpRequest:
 	def setHeader(self, header, value):
 		self.headers[header] = value
 
-	@abstractmethod
 	def __str__(self):
-		pass
+		reqStr = self.method + " " + self.uri + " " + HttpRequest.protocol + "\r\n"
+		for header, value in self.headers.iteritems():
+			reqStr+=header + ": " + value + "\r\n"
+		reqStr+="\r\n"
+		return reqStr
 
 # Defines a HTTP GET request
 class HttpGet(HttpRequest):
@@ -89,9 +83,4 @@ class HttpGet(HttpRequest):
 		super(HttpGet, self).__init__(url, headers)
 		self.method = "GET"
 
-	def __str__(self):
-		reqStr = self.method + " " + self.uri + " " + self.protocol + "\r\n"
-		for header, value in self.headers.iteritems():
-			reqStr+=header + ": " + value + "\r\n"
-		reqStr+="\r\n"
-		return reqStr
+	
