@@ -17,10 +17,10 @@ class Database:
       "CREATE TABLE `pricelist` ("
       "   id Integer AUTO_INCREMENT PRIMARY KEY,"
       "   name varchar(512) NOT NULL,"
-      "   platform varchar(512) NOT NULL,"
-      "   condition varchar(512),"
-      "   origin varchar(512) NOT NULL,"
       "   price float NOT NULL,"
+      "   platform varchar(512),"
+      "   cond varchar(512),"
+      "   url  varchar(1024) NOT NULL,"
       "   lastUpdate datetime NOT NULL,"
       "   createdAt datetime NOT NULL,"
       "   updatedAt datetime NOT NULL"
@@ -47,12 +47,15 @@ class Database:
 
     arr = []
 
-    for(id, name, url, price, lastUpdate, createdAt, updatedAt) in cursor:
+    for(id, name, price, platform, condition, url,
+        lastUpdate, createdAt, updatedAt) in cursor:
       entry = {
         "id": id,
         "name": name,
-        "url": url,
         "price": price,
+        "platform": platform,
+        "cond": condition,
+        "url": url,
         "lastUpdate": lastUpdate.strftime("%Y-%m-%d %H:%M:%S"),
         "createdAt": createdAt.strftime("%Y-%m-%d %H:%M:%S"),
         "updatedAt": updatedAt.strftime("%Y-%m-%d %H:%M:%S")
@@ -62,33 +65,36 @@ class Database:
     cursor.close()
     return arr
 
-  def insertURL(self, name, price, url, lastUpdate):
+  def insertURL(self, name, price, platform, condition, url, lastUpdate):
     cursor = self.connection.cursor()
 
     addEntry = ("INSERT INTO pricelist "
-                "(name, url, price, lastUpdate, createdAt, updatedAt) "
-                "VALUES (%s, %s, %s, %s, %s, %s)")
+                "(name, price, platform, cond, url, lastUpdate, createdAt, updatedAt) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
 
-    data = (name, url, price, lastUpdate, datetime.now(), datetime.now())
+    data = (name, price, platform, condition, url,
+            lastUpdate, datetime.now(), datetime.now())
 
     cursor.execute(addEntry, data)
 
     self.connection.commit()
     cursor.close()
 
-# db = Database()
-# db.insertURL("Mario Cart", 25.03, "http://test/mario1", "2015/10/10 10:10")
-# print db.queryByName("Mari")
+db = Database()
+db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario1", "2015/10/10 10:10")
+print db.queryByName("Mari")
 
 """
 Things I modified:
--condition(either preowned or new) column
+-cond(either preowned or new) column
 -platform column
--changed url -> origin. I don't get the url with the html page, but I can code which domain it came from
+
+for url column, depends if zx will give me the url, else it will be a sitename.
 
 I think you need 2 tables, one to query for already-crawled-urls,
 and one to query for games.
 
-Methods that I think we need
+SQL query methods that I think we need
 1. Check for already crawled url
+2. Optional but any other query, by platform, by price..
 """
