@@ -1,14 +1,43 @@
 from components.downloader import Downloader
+from components.QueueManager import QueueManager
+from components.Database import Database
+
+from DataParser.Classifier import Classifier
+from DataParser.Parser import Parser
+
 
 class Crawler(object):
   if __name__ == '__main__':
     d = Downloader()
+    parser = Parser()
+    db = Database()
+    manager = QueueManager()
 
-    d.download("https://www.gametrader.sg/profile.php?nick=sirius&platform=PS3")
-    d.download("https://carousell.com/p/20557583/")
-    d.download("https://carousell.com/")
-    d.download("https://www.gametrader.sg/game_pg.php?post_id=140275&title=FIFA+16&platform=PS3&seller=sirius")
-    d.download("https://www.gametrader.sg/game_pg.php?post_id=140452&title=Jtag+xbox+360+Slim&platform=Xbox%20360&seller=seechen")
+    # load in links if queue empty
+    if len(manager.hosts) == 0:
+        seed = open('seed.txt', 'r')
+        for line in seed:
+            manager.queue(line)
+
+    linkToCrawl = manager.dequeue()
+    # pageUrlTuple = d.download(linkToCrawl)
+    # info = parser.parse(pageUrlTuple[0], pageUrlTuple[1])
+
+    links = info[0]
+    data = info[1]
+
+    for link in links:
+        # queryDb, if link is in db
+        # db.query()
+        manager.queue(link)
+
+    if data is not None:
+        name = data['name']
+        price = data['price']
+        platform = data['platform']
+        condition = data['condition']
+        url = data['origin']
+        db.insertURL(name, price, platform, condition, url)
 
     """
     d.download("www.google.com")
@@ -21,5 +50,17 @@ class Crawler(object):
     d.download("http://www.rakuten.com.sg/shop/shopitree/category/nintendo3ds/?l-id=sg_product_relatedcategories_1")
     d.download('http://qisahn.com/products/lego-batman-2-dc-super-heroes-1')
     d.download('http://www.funzsquare.com/games-used-c-135_158.html')
-    """
 
+    d.download('http://qisahn.com/')
+    d.download('http://qisahn.com/products/metal-gear-solid-v-the-phantom-pain-2')
+    d.download('http://qisahn.com/buyback')
+    d.download('http://qisahn.com/pg/nintendo-3ds-new-3ds-xl-games-pre-order')
+    d.download('http://qisahn.com/products/resident-evil-archives-resident-evil-zero')
+    d.download('http://qisahn.com/products/chibi-robo-zip-lash-1')
+
+    d.download("https://www.gametrader.sg/profile.php?nick=sirius&platform=PS3")
+    d.download("https://carousell.com/p/20557583/")
+    d.download("https://carousell.com/")
+    d.download("https://www.gametrader.sg/game_pg.php?post_id=140275&title=FIFA+16&platform=PS3&seller=sirius")
+    d.download("https://www.gametrader.sg/game_pg.php?post_id=140452&title=Jtag+xbox+360+Slim&platform=Xbox%20360&seller=seechen")
+    """

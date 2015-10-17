@@ -80,9 +80,9 @@ class Database:
     self.connection.commit()
     cursor.close()
 
-db = Database()
-db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario1", "2015/10/10 10:10")
-print db.queryByName("Mari")
+# db = Database()
+# db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario1", "2015/10/10 10:10")
+# print db.queryByName("Mari")
 
 """
 Things I modified:
@@ -90,11 +90,10 @@ Things I modified:
 -platform column
 
 for url column, depends if zx will give me the url, else it will be a sitename.
-
-I think you need 2 tables, one to query for already-crawled-urls,
+so I think you need 2 tables, one to query for already-crawled-urls,
 and one to query for games.
 
 SQL query methods that I think we need
 1. Check for already crawled url
-2. Optional but any other query, by platform, by price..
+2. Optional but any other queries if you want, by platform, by price..
 """

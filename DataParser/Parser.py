@@ -1,4 +1,16 @@
 #!/usr/bin/python
+
+"""
+A parser class to parse out links inside a html page.
+It initiates the Classifier class to retrieve relavant data from the html page
+
+To use, call p.parse()
+Returns: a tuple of (links, data)
+links = [link1, link2, link3]
+data = {'condition': u'Pre-owned', 'platform': u'PC',
+        'price': u'50.00', 'name': u'abcgame', 'origin': 'abc.com'}
+"""
+
 import re
 from Classifier import Classifier
 from bs4 import BeautifulSoup
@@ -7,11 +19,6 @@ class Parser(object):
 
   def __init__(self):
     pass
-
-  # return a tuple of (links, data)
-  # links = [link1, link2, link3]
-  # data = {'condition': u'Pre-owned', 'platform': u'PC',
-  #         'price': u'50.00', 'name': u'abcgame', 'origin': 'abc.com'}
 
   def parse(self, page, domain):
   #  try:
