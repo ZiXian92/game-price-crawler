@@ -44,7 +44,12 @@ class Classifier(object):
 
     normalizedData = Classifier._normalize(data)
     print "after " + str(normalizedData)
-    return normalizedData
+
+    # check for empty dictionary
+    if not normalizedData:
+      return None
+    else:
+      return normalizedData
 
   @staticmethod
   def _normalize(data):
@@ -71,23 +76,23 @@ class RakutenPage(object):
   def getInfo(self):
     if len(self.page.find_all(attrs={"property":"og:type"})) == 0:
       print "This is not a Rakuten product page - "
-      print self.data
       return self.data
 
     # looking into javascript contents
     scriptContent = str(self.page.script.string)
     self.data['price'] = self._rakutenGetPrice(scriptContent)
     self.data['name'] = self._rakutenGetName(scriptContent)
-    self.data['platform'] = self._rakutenGetPlatform(self.data['name']) # platform
+    self.data['platform'] = self._rakutenGetPlatform(self.data['name'])
+    self.data['origin'] = "Rakuten"
 
-    print self.data
     return self.data
 
   @staticmethod
   def _rakutenGetPrice(scriptContent):
     m = re.search(r"'prod_price': ((?:\d|\.)*)", scriptContent)
     if m is not None:
-      return m.group(1)
+      price = m.group(1)
+      return float(price)
     else:
       return None
 
@@ -118,26 +123,26 @@ class GametraderPage(object):
     gameInfo = self.page.select('table[cellpadding="2"] > tr')
     if self._gametraderGetTitleTag(gameInfo) == "Title":
       self.data['name'] = self._gametraderGetName(gameInfo)
+      self.data['origin'] = "Gametrader"
       shortenedInfoList = gameInfo[2:5]
 
       for (count, info) in enumerate(shortenedInfoList):
         infoHtml = info.contents # Price: 320.00 or Plat: Xbox
 
         if count == 0:
-          self.data['platform'] = self._gametraderGetPlatOrStatus(infoHtml)
+          self.data['platform'] = self._gametraderGetPlatOrCond(infoHtml)
 
         elif count == 1:
-          self.data['price'] = self._gametraderGetPrice(infoHtml)[2:] # remove dollar sign
+          self.data['price'] = self._gametraderGetPrice(infoHtml)
 
         elif count == 2:
-          self.data['status'] = self._gametraderGetPlatOrStatus(infoHtml)
+          self.data['condition'] = self._gametraderGetPlatOrCond(infoHtml)
 
     else:
       print "This is not a Gametrader product page - "
     # except:
     #  print "This is not a Gametrader product page - "
     #  print sys.exc_info()[0]
-    print self.data
     return self.data
 
   @staticmethod
@@ -155,7 +160,7 @@ class GametraderPage(object):
       return None
 
   @staticmethod
-  def _gametraderGetPlatOrStatus(infoHtml):
+  def _gametraderGetPlatOrCond(infoHtml):
     try:
       return infoHtml[3].string.strip()
     except:
@@ -164,7 +169,9 @@ class GametraderPage(object):
   @staticmethod
   def _gametraderGetPrice(infoHtml):
     try:
-      return next(infoHtml[3].strings).strip()
+      price = next(infoHtml[3].strings).strip()
+      price = price[2:] # remove dollar sign
+      return float(price)
     except:
       return None
 
@@ -180,6 +187,8 @@ class QisahnPage(object):
     if product:
       self.data['name'] = self._qisahnGetName(product)
       self.data['price'] = self._qisahnGetPrice(product)
+      self.data['origin'] = "Qisahn"
+
       # there could be sold out goods
       if self.data['price'] is None:
         print "Qisahn - no price attached"
@@ -189,7 +198,6 @@ class QisahnPage(object):
     else:
       print "This is not a Qisahn product page - "
 
-    print self.data
     return self.data
 
   @staticmethod
@@ -204,7 +212,8 @@ class QisahnPage(object):
     price = priceTag.string.strip()
     m = Classifier.CONST_MONEY.match(price)
     if m:
-      return m.group(0)[1:]
+      price = m.group(0)[1:]
+      return float(price)
     else:
       return None
 
@@ -223,7 +232,6 @@ class QisahnPage(object):
     try:
       conditionTag = conditionTable.find(style=QisahnPage.CONST_BGRND)
       condition = conditionTag.string.strip()
-      print condition
     except:
       return None
 
