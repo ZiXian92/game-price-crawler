@@ -19,7 +19,7 @@ class HttpRequest:
 	def __init__(self, url, headers={}):
 		if url==None:
 			self.uri = headers["Host"] = ""
-			self.isHttps = false
+			self.isHttps = False
 		else:
 			self.uri = HttpRequest.getUriFromUrl(url)
 			headers["Host"] = HttpRequest.getHostFromUrl(url)

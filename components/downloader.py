@@ -1,4 +1,5 @@
 import socket, ssl
+from Queue import Queue
 from threading import Thread, BoundedSemaphore
 from httprequest import HttpRequests
 
@@ -8,6 +9,7 @@ class Downloader(object):
 	def __init__(self, maxConcurrentRequests = NUMTHREAD_DEFAULT):
 		self.numThreads = maxConcurrentRequests
 		self.resourcePool = BoundedSemaphore(self.numThreads)
+		self.resQueue = Queue()
 
 	# Downloads the HTML file at the given URL and writes to file with same name as URL.
 	# Blocks if there are more than the specified threshold concurrent requests running.
@@ -15,8 +17,24 @@ class Downloader(object):
 		self.resourcePool.acquire()	# Blocking by default
 		Thread(target=self.privateDownload, args=(url,)).start()
 
+	# Returns a tuple (url, htmlString)
+	# Blocks until there is a result
+	def getResult(self):
+		return self.resQueue.get(True)
+
 	# Private
 	def privateDownload(self, url):
+		if url==None:
+			return
+
+		# Chop of any trailing CRLF or LF
+		crIndex = url.find("\r")
+		lfIndex = url.find("\n")
+		if (crIndex==-1) != (lfIndex==-1):
+			url = url[0:max(crIndex, lfIndex)]
+		elif crIndex!=-1:
+			url = url[0:min(crIndex, lfIndex)]
+
 		req = HttpRequests.get(url, {"Connection": "close", "User-Agent": "game-price-crawler", "Accept": "text/html"})
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
@@ -45,7 +63,9 @@ class Downloader(object):
 			print "%s: %d %s" % (url, headers["statusCode"], headers["statusMessage"])
 
 			if headers["statusCode"]==200:
-				res = fp.readline()
+				res = fp.read()
+				self.resQueue.put((url, res))
+				"""res = fp.readline()
 				if res!="":
 					print "%s: Downloading HTML" % (url)
 					filename = (req.getHeader("Host")+req.getPath()).replace("/", "_")
@@ -56,7 +76,7 @@ class Downloader(object):
 					f.close()
 					print "%s: Download complete" % (url)
 				else:
-					print "%s: No content to download" % (url)
+					print "%s: No content to download" % (url) """
 			elif headers.get("Location")!=None:
 				print "%s: Redirecting to %s" % (url, headers["Location"])
 				fp.close()

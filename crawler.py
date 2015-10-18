@@ -1,29 +1,50 @@
 from components.downloader import Downloader
 from components.QueueManager import QueueManager
-from components.Database import Database
+# from components.Database import Database
 
-from DataParser.Classifier import Classifier
-from DataParser.Parser import Parser
+# from DataParser.Classifier import Classifier
+# from DataParser.Parser import Parser
+
+from threading import Thread
+from Queue import Queue
 
 
-class Crawler(object):
-  if __name__ == '__main__':
-    d = Downloader()
-    parser = Parser()
-    db = Database()
-    manager = QueueManager()
+# class Crawler(object):
+d = Downloader()
+
+def processResults():
+    # parser = Parser()
+    while True:
+        res = d.getResult() # Blocking dequeue
+        # res[0] is URL, res[1] is HTML
+        print "%s\n" % (res[1]) # Comment this out
+        # Your parsing code here
+
+if __name__ == '__main__':
+    
+    # parser = Parser()
+    # db = Database()
+    #manager = QueueManager()
+    urlQueue = Queue()
+    resultProcessor = Thread(target=processResults)
+
+    resultProcessor.start()
 
     # load in links if queue empty
-    if len(manager.hosts) == 0:
+    # if len(manager.hosts) == 0:
+    if urlQueue.empty():
         seed = open('seed.txt', 'r')
         for line in seed:
-            manager.queue(line)
+            urlQueue.put(line)
+            # manager.queue(line)
 
-    linkToCrawl = manager.dequeue()
-    # pageUrlTuple = d.download(linkToCrawl)
+    #while len(manager.hosts)>0:
+        # linkToCrawl = manager.dequeue()
+    while not urlQueue.empty():
+        d.download(urlQueue.get())
     # info = parser.parse(pageUrlTuple[0], pageUrlTuple[1])
 
-    links = info[0]
+    """links = info[0]
     data = info[1]
 
     for link in links:
@@ -37,7 +58,9 @@ class Crawler(object):
         platform = data['platform']
         condition = data['condition']
         url = data['origin']
-        db.insertURL(name, price, platform, condition, url)
+        db.insertURL(name, price, platform, condition, url) """
+
+    
 
     """
     d.download("www.google.com")
