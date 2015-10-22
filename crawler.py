@@ -1,66 +1,63 @@
 from components.downloader import Downloader
 from components.QueueManager import QueueManager
-# from components.Database import Database
+from components.Database import Database
 
-# from DataParser.Classifier import Classifier
-# from DataParser.Parser import Parser
+from DataParser.Classifier import Classifier
+from DataParser.Parser import Parser
 
 from threading import Thread
 from Queue import Queue
 
+import time
 
-# class Crawler(object):
 d = Downloader()
 
+urlQueue = Queue()
+
 def processResults():
-    # parser = Parser()
+    parser = Parser()
+    db = Database()
     while True:
         res = d.getResult() # Blocking dequeue
         # res[0] is URL, res[1] is HTML
-        print "%s\n" % (res[1]) # Comment this out
-        # Your parsing code here
+        info = parser.parse(res[1], res[0])
+        # print "%s\n" % (res[1]) # Comment this out
+
+        links = info[0]
+        data = info[1]
+
+        print len(links)
+
+        for link in links:
+            # queryDb, if link is in db
+            urlQueue.put(link)
+
+        if data is not None:
+            name = data['name']
+            price = data['price']
+            platform = data['platform']
+            condition = data['condition']
+            url = data['origin']
+            db.insertURL(name, price, platform, condition, url)
 
 if __name__ == '__main__':
-    
-    # parser = Parser()
-    # db = Database()
-    #manager = QueueManager()
-    urlQueue = Queue()
+
     resultProcessor = Thread(target=processResults)
 
     resultProcessor.start()
 
     # load in links if queue empty
-    # if len(manager.hosts) == 0:
     if urlQueue.empty():
         seed = open('seed.txt', 'r')
         for line in seed:
             urlQueue.put(line)
-            # manager.queue(line)
 
-    #while len(manager.hosts)>0:
-        # linkToCrawl = manager.dequeue()
     while not urlQueue.empty():
-        d.download(urlQueue.get())
-    # info = parser.parse(pageUrlTuple[0], pageUrlTuple[1])
+        link = urlQueue.get()
+        print "Currently crawling: " + link
+        time.sleep(2)
+        d.download(link)
 
-    """links = info[0]
-    data = info[1]
-
-    for link in links:
-        # queryDb, if link is in db
-        # db.query()
-        manager.queue(link)
-
-    if data is not None:
-        name = data['name']
-        price = data['price']
-        platform = data['platform']
-        condition = data['condition']
-        url = data['origin']
-        db.insertURL(name, price, platform, condition, url) """
-
-    
 
     """
     d.download("www.google.com")
