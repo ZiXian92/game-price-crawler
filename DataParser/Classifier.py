@@ -12,6 +12,7 @@ class Classifier(object):
     ('ds', 'nintendo ds'): '3DS',
     ('3ds', 'nintendo 3ds'): '3DS',
     ('3ds xl','new 3ds xl'): '3DS XL',
+    ('new 3ds xl', 'nintendo new 3ds xl'): 'New 3DS XL',
     ('ps3', 'playstation 3', 'playstation3', 'sony playstation 3') : 'Playstation 3',
     ('ps4', 'playstation 4', 'playstation4', 'sony playstation 4') : 'Playstation 4',
     ('ps vita', 'sony ps vita') : 'PS Vita',
@@ -30,20 +31,24 @@ class Classifier(object):
   def __init__(self):
     pass
 
-  def classify(self, page):
+  def classify(self, page, url):
     title = str(page.title)
     data = {}
+
     if "Rakuten" in title:
-      data = RakutenPage(page).getInfo()
+      data = RakutenPage(page, url).getInfo()
 
     elif "GameTrader" in title:
-      data = GametraderPage(page).getInfo()
+      data = GametraderPage(page, url).getInfo()
 
     elif "Qisahn" in title:
-      data = QisahnPage(page).getInfo()
+      data = QisahnPage(page, url).getInfo()
+
+    else:
+      print "Page not within crawling domains"
 
     normalizedData = Classifier._normalize(data)
-    print "after " + str(normalizedData)
+    print "normalized data: " + str(normalizedData)
 
     # check for empty dictionary
     if not normalizedData:
@@ -57,6 +62,10 @@ class Classifier(object):
     if data is None:
       return data
     else:
+      if 'name' in data and data['name'] is None:
+        return None
+      if 'price' in data and data['price'] is None:
+        return None
       if 'platform' in data and data['platform'] is not None:
         platform = data['platform'].lower()
         data['platform'] = Classifier._normalizePlatform(platform)
@@ -69,9 +78,10 @@ class Classifier(object):
 
 class RakutenPage(object):
 
-  def __init__(self, page):
+  def __init__(self, page, url):
     self.page = page
     self.data = {}
+    self.url = url
 
   def getInfo(self):
     if len(self.page.find_all(attrs={"property":"og:type"})) == 0:
@@ -80,10 +90,11 @@ class RakutenPage(object):
 
     # looking into javascript contents
     scriptContent = str(self.page.script.string)
-    self.data['price'] = self._rakutenGetPrice(scriptContent)
     self.data['name'] = self._rakutenGetName(scriptContent)
+    self.data['price'] = self._rakutenGetPrice(scriptContent)
     self.data['platform'] = self._rakutenGetPlatform(self.data['name'])
-    self.data['origin'] = "Rakuten"
+    self.data['origin'] = self.url
+    self.data['condition'] = None # Rakuten does not provide this field
 
     return self.data
 
@@ -113,9 +124,10 @@ class RakutenPage(object):
 
 class GametraderPage(object):
 
-  def __init__(self, page):
+  def __init__(self, page, url):
     self.page = page
     self.data = {}
+    self.url = url
 
   def getInfo(self):
     # determine if product page
@@ -123,7 +135,7 @@ class GametraderPage(object):
     gameInfo = self.page.select('table[cellpadding="2"] > tr')
     if self._gametraderGetTitleTag(gameInfo) == "Title":
       self.data['name'] = self._gametraderGetName(gameInfo)
-      self.data['origin'] = "Gametrader"
+      self.data['origin'] = self.url
       shortenedInfoList = gameInfo[2:5]
 
       for (count, info) in enumerate(shortenedInfoList):
@@ -177,59 +189,65 @@ class GametraderPage(object):
 
 class QisahnPage(object):
   CONST_BGRND = re.compile(r'.*orange.*')
-  def __init__(self, page):
+
+  def __init__(self, page, url):
     self.page = page
     self.data = {}
+    self.url = url
 
   def getInfo(self):
     # determine
-    product = self.page.find(id="product_wrapper", attrs={"data-hook": "product_show"})
-    if product:
-      self.data['name'] = self._qisahnGetName(product)
-      self.data['price'] = self._qisahnGetPrice(product)
-      self.data['origin'] = "Qisahn"
-
-      # there could be sold out goods
-      if self.data['price'] is None:
-        print "Qisahn - no price attached"
-        return None
-      self.data['platform'] = self._qisahnGetPlatform(product)
-      self.data['condition'] = self._qisahnGetCondition(product)
-    else:
-      print "This is not a Qisahn product page - "
-
+    try:
+      product = self.page.find(id="product_wrapper", attrs={"data-hook": "product_show"})
+      if product:
+        self.data['name'] = self._qisahnGetName(product)
+        self.data['price'] = self._qisahnGetPrice(product)
+        self.data['origin'] = self.url
+        self.data['platform'] = self._qisahnGetPlatform(product)
+        self.data['condition'] = self._qisahnGetCondition(product)
+      else:
+        print "This is not a Qisahn product page - "
+    except:
+      return self.data
     return self.data
 
   @staticmethod
   def _qisahnGetName(product):
-    nameTag = product.find(id='product_base_name')
-    name = nameTag.string.strip()
-    return name
-
-  @staticmethod
-  def _qisahnGetPrice(product):
-    priceTag = product.find(id='product_price')
-    price = priceTag.string.strip()
-    m = Classifier.CONST_MONEY.match(price)
-    if m:
-      price = m.group(0)[1:]
-      return float(price)
-    else:
+    try:
+      nameTag = product.find(id='product_base_name')
+      name = nameTag.string.strip()
+      return name
+    except:
       return None
 
   @staticmethod
+  def _qisahnGetPrice(product):
+    try:
+      priceTag = product.find(id='product_price')
+      price = priceTag.contents[0].strip()
+      m = Classifier.CONST_MONEY.match(price)
+      if m:
+        price = m.group(0)[1:]
+        return float(price)
+      else:
+        return None
+    except:
+        return None
+
+  @staticmethod
   def _qisahnGetPlatform(product):
-    platformTable = product.find(id='platform_variation')
-    #print platformTable
-    platformTag = platformTable.find(style=QisahnPage.CONST_BGRND)
-    #print platformTag
-    platform = platformTag.string.strip()
-    return platform
+    try:
+      platformTable = product.find(id='platform_variation')
+      platformTag = platformTable.find(style=QisahnPage.CONST_BGRND)
+      platform = platformTag.string.strip()
+      return platform
+    except:
+      return None
 
   @staticmethod
   def _qisahnGetCondition(product):
-    conditionTable = product.find(id='condition_variation')
     try:
+      conditionTable = product.find(id='condition_variation')
       conditionTag = conditionTable.find(style=QisahnPage.CONST_BGRND)
       condition = conditionTag.string.strip()
     except:

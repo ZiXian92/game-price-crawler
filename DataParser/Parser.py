@@ -14,22 +14,25 @@ data = {'condition': u'Pre-owned', 'platform': u'PC',
 import re
 from Classifier import Classifier
 from bs4 import BeautifulSoup
+from urlparse import urlparse
 
 class Parser(object):
 
   def __init__(self):
-    pass
+    self.classifier = Classifier()
 
-  def parse(self, page, domain):
+  def parse(self, page, url):
   #  try:
-      classifier = Classifier()
+      print "Currently parsing: " + url
       soup = BeautifulSoup(page, 'html.parser')
-      links = self.getRelevantUris(soup, domain)
+      links = self.getRelevantUris(soup, url)
 
-      data = classifier.classify(soup)
+      data = self.classifier.classify(soup, url)
 
       # remove dups
       links = list(set(links))
+      print len(links)
+
       return (links, data)
 
     # except:
@@ -37,7 +40,12 @@ class Parser(object):
     #   return None
 
   # takes in a html page
-  def getRelevantUris(self, page, domain):
+  def getRelevantUris(self, page, url):
+
+    # retrieve domain from url
+    parsed_uri = urlparse(url)
+    domain = '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
+
     listOfLinks = []
     for link in page.find_all('a'):
       listOfLinks.append(link.get('href'))
@@ -48,23 +56,24 @@ class Parser(object):
   def concatRelativeLinks(self, listOfLinks, domain):
     newLinks = []
     for link in listOfLinks:
-      if link is None or link.startswith('#'):
+      if link is None or link.startswith('#') or link.startswith('.') or 'javascript' in link:
         pass
-      elif link.startswith("/") :
+      elif self.isRelativeLink(link): ## check for dot
         newLinks.append(domain + link)
       else:
         newLinks.append(link)
     return newLinks
 
-  def removeLinks(self, listOfLinks):
-    pass
-    """
-    # additional sieving if needed, with keywords
-    linkContent = link.contents
-    uri = link.get('href')if not line.startswith("?"):
-    if "keyword" in uri or "keyword" in linkContent:
-      print link.get('href')
-    """
+  def isRelativeLink(self, link):
+    frontUrl = link.split('?',1)[0]
+    if link.startswith('/'):
+      return True
+    if 'php' in frontUrl and '/' not in frontUrl:
+      return True
+    if len(link.split('.')) == 1:
+      return True
+    else:
+      return False
 
   if __name__ == '__main__':
     parser = Parser()
