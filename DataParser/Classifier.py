@@ -15,6 +15,7 @@ class Classifier(object):
     ('new 3ds xl', 'nintendo new 3ds xl'): 'New 3DS XL',
     ('ps3', 'playstation 3', 'playstation3', 'sony playstation 3') : 'Playstation 3',
     ('ps4', 'playstation 4', 'playstation4', 'sony playstation 4') : 'Playstation 4',
+    ('psp') : 'PSP',
     ('ps vita', 'sony ps vita') : 'PS Vita',
     ('xbox 360',) : 'Xbox 360',
     ('xbox one',) : 'Xbox One',
@@ -31,6 +32,8 @@ class Classifier(object):
   def __init__(self):
     pass
 
+  # returns {} if page is within domain but not relevant
+  # returns None if page is not within domain
   def classify(self, page, url):
     title = str(page.title)
     data = {}
@@ -46,13 +49,14 @@ class Classifier(object):
 
     else:
       print "Page not within crawling domains"
+      return None
 
     normalizedData = Classifier._normalize(data)
     print "normalized data: " + str(normalizedData)
 
-    # check for empty dictionary
+    # check for empty dictionary or None
     if not normalizedData:
-      return None
+      return {}
     else:
       return normalizedData
 
@@ -197,19 +201,25 @@ class QisahnPage(object):
 
   def getInfo(self):
     # determine
-    try:
-      product = self.page.find(id="product_wrapper", attrs={"data-hook": "product_show"})
-      if product:
-        self.data['name'] = self._qisahnGetName(product)
-        self.data['price'] = self._qisahnGetPrice(product)
-        self.data['origin'] = self.url
-        self.data['platform'] = self._qisahnGetPlatform(product)
-        self.data['condition'] = self._qisahnGetCondition(product)
-      else:
-        print "This is not a Qisahn product page - "
-    except:
-      return self.data
+    product = self._qisahnGetProductSection(self.page)
+    if product:
+      self.data['name'] = self._qisahnGetName(product)
+      self.data['price'] = self._qisahnGetPrice(product)
+      self.data['origin'] = self.url
+      self.data['platform'] = self._qisahnGetPlatform(product)
+      self.data['condition'] = self._qisahnGetCondition(product)
+    else:
+      print "This is not a Qisahn product page - "
+
     return self.data
+
+  @staticmethod
+  def _qisahnGetProductSection(page):
+    try:
+      product = page.find(id="product_wrapper", attrs={"data-hook": "product_show"})
+      return product
+    except:
+      return False
 
   @staticmethod
   def _qisahnGetName(product):

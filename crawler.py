@@ -31,7 +31,7 @@ def processResults():
             # queryDb, if link is in db
             urlQueue.put(link)
 
-        if data is not None:
+        if data is not None and 'name' in data:
             name = data['name']
             price = data['price']
             platform = data['platform']
