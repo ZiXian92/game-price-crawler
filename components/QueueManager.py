@@ -1,11 +1,12 @@
-import Queue
+
+from Queue import Queue
 
 class URIQueue:
 
   #Initialize host URI queue
   def __init__(self, host):
     self.host = host
-    self.uriQueue = []
+    self.uriQueue = Queue()
 
   #Get host name of the queue
   def getHostName(self):
@@ -13,15 +14,15 @@ class URIQueue:
 
   #Queue a uri
   def queueURI(self, uri):
-    self.uriQueue.append(uri)
+    self.uriQueue.put(uri)
     return True
 
   #Dequeue a uri, return None if empty queue
   def dequeueURI(self):  
-    if len(self.uriQueue) == 0:
+    if self.uriQueue.empty():
       return None
     else:
-      return self.uriQueue.pop(0)
+      return self.uriQueue.get(True)
 
 #A class to manage all the UriQueue
 class QueueManager:
@@ -49,6 +50,7 @@ class QueueManager:
 
       # Scenario when the token is passed 1 round 
       # and no URL is found
+      # Comment this part to make the queueManager a blocking function
       if self.token is current and uri == None:
         return None
 
@@ -77,23 +79,23 @@ class QueueManager:
     return True
 
 
-# manager = QueueManager()
-# manager.queue("http://www.test1.org/abc/asbag/sduysd/sdcuysdg")
-# manager.queue("test1/123")
-# manager.queue("test2/3435")
-# manager.queue("test1/56556")
-# manager.queue("test2/hey")
-# manager.queue("test3/another")
-# manager.queue("test3/goign")
-# manager.queue("test1/???")
+manager = QueueManager()
+manager.queue("http://www.test1.org/abc/asbag/sduysd/sdcuysdg")
+manager.queue("test1/123")
+manager.queue("test2/3435")
+manager.queue("test1/56556")
+manager.queue("test2/hey")
+manager.queue("test3/another")
+manager.queue("test3/goign")
+manager.queue("test1/???")
 
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
+print manager.dequeue()
+print manager.dequeue()
+print manager.dequeue()
+print manager.dequeue()
+print manager.dequeue()
+print manager.dequeue()
+print manager.dequeue()
+print manager.dequeue()
+print manager.dequeue()
+print manager.dequeue()
