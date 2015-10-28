@@ -1,5 +1,6 @@
 import mysql.connector
 from datetime import date, datetime
+from datetime import timedelta
 from mysql.connector import errorcode
 
 class Database:
@@ -15,15 +16,32 @@ class Database:
 
     table = (
       "CREATE TABLE `pricelist` ("
-      "   id Integer AUTO_INCREMENT PRIMARY KEY,"
+      # "   id Integer AUTO_INCREMENT PRIMARY KEY,"
       "   name varchar(512) NOT NULL,"
       "   price float NOT NULL,"
       "   platform varchar(512),"
       "   cond varchar(512),"
-      "   url  varchar(1024) NOT NULL,"
+      # "   url  varchar(1024) NOT NULL,"
+      "   url  varchar(512) NOT NULL PRIMARY KEY,"
       "   lastUpdate datetime NOT NULL,"
       "   createdAt datetime NOT NULL,"
       "   updatedAt datetime NOT NULL"
+      ")"
+    )
+
+    try:
+      cursor.execute(table)
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
+            print("already exists.")
+        else:
+            print(err.msg)
+    else:
+        print("OK")
+
+    table = (
+      "CREATE TABLE `junkurl` ("
+      "   url  varchar(512) NOT NULL PRIMARY KEY"
       ")"
     )
 
@@ -66,34 +84,82 @@ class Database:
     return arr
 
   def insertURL(self, name, price, platform, condition, url, lastUpdate):
+    if self.hasQueried(url):
+      return False
+    else:
+      cursor = self.connection.cursor()
+
+      addEntry = ("INSERT INTO pricelist "
+                  "(name, price, platform, cond, url, lastUpdate, createdAt, updatedAt) "
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+
+      data = (name, price, platform, condition, url,
+              lastUpdate, datetime.now(), datetime.now())
+
+      cursor.execute(addEntry, data)
+
+      self.connection.commit()
+      cursor.close()
+      return True
+
+  def hasQueried(self,url):
     cursor = self.connection.cursor()
 
-    addEntry = ("INSERT INTO pricelist "
-                "(name, price, platform, cond, url, lastUpdate, createdAt, updatedAt) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+    cursor.execute( "SELECT * FROM pricelist "
+                    "WHERE url = '" + url + "'")
 
-    data = (name, price, platform, condition, url,
-            lastUpdate, datetime.now(), datetime.now())
+    queried = False
+    for(id, name, price, platform, condition, url,
+        lastUpdate, createdAt, updatedAt) in cursor:
 
-    cursor.execute(addEntry, data)
+      if datetime.now() > lastUpdate + timedelta(days=10):
+        queried = True
+      else:
+        queried = False
 
-    self.connection.commit()
     cursor.close()
 
+    return queried
+
+
+  def insertJunkURL(self, url):
+    if self.junkQueried(url):
+      return False
+    else:
+      cursor = self.connection.cursor()
+
+      addEntry = ("INSERT INTO junkurl (url) VALUES (\'"+ url +"\')")
+
+      # data = (url)
+
+      # cursor.execute(addEntry, data)
+
+      cursor.execute(addEntry)
+
+      self.connection.commit()
+      cursor.close()
+      return True
+
+
+  def junkQueried(self,url):
+    cursor = self.connection.cursor()
+
+    cursor.execute( "SELECT * FROM junkurl "
+                    "WHERE url = '" + url + "'")
+
+    queried = False
+    for(url) in cursor:
+      queried = True
+      
+    cursor.close()
+
+    return queried
+
 # db = Database()
-# db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario1", "2015/10/10 10:10")
+# print db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario4", "2015/10/10 10:10")
 # print db.queryByName("Mari")
-
-"""
-Things I modified:
--cond(either preowned or new) column
--platform column
-
-for url column, depends if zx will give me the url, else it will be a sitename.
-so I think you need 2 tables, one to query for already-crawled-urls,
-and one to query for games.
-
-SQL query methods that I think we need
-1. Check for already crawled url
-2. Optional but any other queries if you want, by platform, by price..
-"""
+# print db.hasQueried("http://test/mario")
+# print db.hasQueried("http://test/mario1")
+# print db.hasQueried("http://test/mario4")
+# print db.insertJunkURL("rubbishes")
+# print db.junkQueried("rubbishs")
