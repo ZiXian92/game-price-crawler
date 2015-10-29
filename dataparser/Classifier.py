@@ -51,28 +51,21 @@ class Classifier(object):
             print "Page not within crawling domains"
             return None
 
-        normalizedData = Classifier._normalize(data)
-        print "normalized data: " + str(normalizedData)
+        validatedData = Classifier._validate(data)
+        print "data: " + str(validatedData)
+        return validatedData
 
-        # check for empty dictionary or None
-        if not normalizedData:
-            return {}
-        else:
-            return normalizedData
-
+    # return empty dictionary {} if data is not valid
     @staticmethod
-    def _normalize(data):
+    def _validate(data):
 
-        if data is None:
-            return data
-        else:
-            if 'name' in data and data['name'] is None:
-                return None
-            if 'price' in data and data['price'] is None:
-                return None
-            if 'platform' in data and data['platform'] is not None:
-                platform = data['platform'].lower()
-                data['platform'] = Classifier._normalizePlatform(platform)
+        if 'name' in data and data['name'] is None:
+            return {}
+        if 'price' in data and data['price'] is None:
+            return {}
+        if 'platform' in data and data['platform'] is not None:
+            platform = data['platform'].lower()
+            data['platform'] = Classifier._normalizePlatform(platform)
 
         return data
 
