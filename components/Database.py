@@ -23,6 +23,7 @@ class Database:
       "   cond varchar(512),"
       # "   url  varchar(1024) NOT NULL,"
       "   url  varchar(512) NOT NULL PRIMARY KEY,"
+      "   rtt integer,"
       "   lastUpdate datetime NOT NULL,"
       "   createdAt datetime NOT NULL,"
       "   updatedAt datetime NOT NULL"
@@ -41,7 +42,8 @@ class Database:
 
     table = (
       "CREATE TABLE `junkurl` ("
-      "   url  varchar(512) NOT NULL PRIMARY KEY"
+      "   url  varchar(512) NOT NULL PRIMARY KEY,"
+      "   rtt integer"
       ")"
     )
 
@@ -65,15 +67,15 @@ class Database:
 
     arr = []
 
-    for(id, name, price, platform, condition, url,
+    for(name, price, platform, condition, url, rtt,
         lastUpdate, createdAt, updatedAt) in cursor:
       entry = {
-        "id": id,
         "name": name,
         "price": price,
         "platform": platform,
         "cond": condition,
         "url": url,
+        "rtt": rtt,
         "lastUpdate": lastUpdate.strftime("%Y-%m-%d %H:%M:%S"),
         "createdAt": createdAt.strftime("%Y-%m-%d %H:%M:%S"),
         "updatedAt": updatedAt.strftime("%Y-%m-%d %H:%M:%S")
@@ -83,17 +85,17 @@ class Database:
     cursor.close()
     return arr
 
-  def insertURL(self, name, price, platform, condition, url, lastUpdate):
+  def insertURL(self, name, price, platform, condition, url, rtt, lastUpdate):
     if self.hasQueried(url):
       return False
     else:
       cursor = self.connection.cursor()
 
       addEntry = ("INSERT INTO pricelist "
-                  "(name, price, platform, cond, url, lastUpdate, createdAt, updatedAt) "
-                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+                  "(name, price, platform, cond, url, rtt, lastUpdate, createdAt, updatedAt) "
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)")
 
-      data = (name, price, platform, condition, url,
+      data = (name, price, platform, condition, url, str(rtt),
               lastUpdate, datetime.now(), datetime.now())
 
       cursor.execute(addEntry, data)
@@ -109,7 +111,7 @@ class Database:
                     "WHERE url = '" + url + "'")
 
     queried = False
-    for(id, name, price, platform, condition, url,
+    for(name, price, platform, condition, url, rtt,
         lastUpdate, createdAt, updatedAt) in cursor:
 
       if datetime.now() > lastUpdate + timedelta(days=10):
@@ -122,13 +124,13 @@ class Database:
     return queried
 
 
-  def insertJunkURL(self, url):
+  def insertJunkURL(self, url, rtt):
     if self.junkQueried(url):
       return False
     else:
       cursor = self.connection.cursor()
 
-      addEntry = ("INSERT INTO junkurl (url) VALUES (\'"+ url +"\')")
+      addEntry = ("INSERT INTO junkurl (url,rtt) VALUES (\'"+ url +"\'," + str(rtt) + ")")
 
       # data = (url)
 
@@ -155,11 +157,11 @@ class Database:
 
     return queried
 
-# db = Database()
-# print db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario4", "2015/10/10 10:10")
-# print db.queryByName("Mari")
-# print db.hasQueried("http://test/mario")
-# print db.hasQueried("http://test/mario1")
-# print db.hasQueried("http://test/mario4")
-# print db.insertJunkURL("rubbishes")
-# print db.junkQueried("rubbishs")
+db = Database()
+print db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario4", 50, "2015/10/10 10:10")
+print db.queryByName("Mari")
+print db.hasQueried("http://test/mario")
+print db.hasQueried("http://test/mario1")
+print db.hasQueried("http://test/mario4")
+print db.insertJunkURL("rubbishes", 50)
+print db.junkQueried("rubbishs")
