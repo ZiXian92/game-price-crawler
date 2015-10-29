@@ -43,7 +43,10 @@ class Database:
     table = (
       "CREATE TABLE `junkurl` ("
       "   url  varchar(512) NOT NULL PRIMARY KEY,"
-      "   rtt integer"
+      "   rtt integer,"
+      "   lastUpdate datetime NOT NULL,"
+      "   createdAt datetime NOT NULL,"
+      "   updatedAt datetime NOT NULL"
       ")"
     )
 
@@ -86,7 +89,7 @@ class Database:
     return arr
 
   def insertURL(self, name, price, platform, condition, url, rtt, lastUpdate):
-    if self.hasQueried(url):
+    if self.productQueried(url):
       return False
     else:
       cursor = self.connection.cursor()
@@ -104,39 +107,38 @@ class Database:
       cursor.close()
       return True
 
-  def hasQueried(self,url):
+  def hasQueried(self, url):
+    return self.productQueried(url) and self.junkQueried(url)
+
+  def productQueried(self,url):
     cursor = self.connection.cursor()
 
-    cursor.execute( "SELECT * FROM pricelist "
-                    "WHERE url = '" + url + "'")
+    cursor.execute("SELECT * FROM pricelist WHERE url = %s", (url,))
 
     queried = False
     for(name, price, platform, condition, url, rtt,
         lastUpdate, createdAt, updatedAt) in cursor:
 
       if datetime.now() > lastUpdate + timedelta(days=10):
-        queried = True
-      else:
         queried = False
-
+      else:
+        queried = True
     cursor.close()
 
     return queried
 
-
-  def insertJunkURL(self, url, rtt):
+  def insertJunkURL(self, url, rtt, lastUpdate):
     if self.junkQueried(url):
       return False
     else:
       cursor = self.connection.cursor()
 
-      addEntry = ("INSERT INTO junkurl (url,rtt) VALUES (\'"+ url +"\'," + str(rtt) + ")")
+      # addEntry = ("INSERT INTO junkurl (url,rtt) VALUES (\'"+ url +"\'," + str(rtt) + ")")
 
-      # data = (url)
+      addEntry = ("INSERT INTO junkurl (url, rtt, lastUpdate) VALUES (%s, %s, %s)")
+      data = (url, rtt, lastUpdate)
 
-      # cursor.execute(addEntry, data)
-
-      cursor.execute(addEntry)
+      cursor.execute(addEntry, data)
 
       self.connection.commit()
       cursor.close()
@@ -146,22 +148,33 @@ class Database:
   def junkQueried(self,url):
     cursor = self.connection.cursor()
 
-    cursor.execute( "SELECT * FROM junkurl "
-                    "WHERE url = '" + url + "'")
+    cursor.execute("SELECT * FROM junkurl WHERE url = %s", (url,))
+
+    # queried = False
+    # for(url) in cursor:
+    #   queried = True
+    #   print 'this junk has been queried'
+    # cursor.close()
+
+    # return queried
 
     queried = False
-    for(url) in cursor:
-      queried = True
-      
+
+    for(url, rtt, lastUpdate, createdAt, updatedAt) in cursor:
+
+      if datetime.now() > lastUpdate + timedelta(days=10):
+        queried = False
+      else:
+        queried = True
     cursor.close()
 
     return queried
 
-db = Database()
-print db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario4", 50, "2015/10/10 10:10")
-print db.queryByName("Mari")
-print db.hasQueried("http://test/mario")
-print db.hasQueried("http://test/mario1")
-print db.hasQueried("http://test/mario4")
-print db.insertJunkURL("rubbishes", 50)
-print db.junkQueried("rubbishs")
+# db = Database()
+# print db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario4", 50, "2015/10/10 10:10")
+# print db.queryByName("Mari")
+# print db.hasQueried("http://test/mario")
+# print db.hasQueried("http://test/mario1")
+# print db.hasQueried("http://test/mario4")
+# print db.insertJunkURL("rubbishes", 50)
+# print db.junkQueried("rubbishs")

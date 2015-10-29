@@ -2,8 +2,8 @@ from components.downloader import Downloader
 from components.QueueManager import QueueManager
 from components.Database import Database
 
-from DataParser.Classifier import Classifier
-from DataParser.Parser import Parser
+from dataparser.Classifier import Classifier
+from dataparser.Parser import Parser
 
 from datetime import date, datetime
 from threading import Thread
@@ -20,16 +20,18 @@ def processResults():
     db = Database()
     while True:
         res = d.getResult() # Blocking dequeue
-        # res[0] is URL, res[1] is HTML
-        info = parser.parse(res[1], res[0])
-        # print "%s\n" % (res[1]) # Comment this out
+
+        # res[0] is URL, res[1] is HTML, res[2] is response time
+        info = parser.parse(res[1], res[0], res[2])
 
         links = info[0]
         data = info[1]
+        time = info[2]
 
+        # queue only links that has not been queried within 10 days
         for link in links:
-            # queryDb, if link is in db
-            urlQueue.put(link)
+            if not db.hasQueried(link):
+                urlQueue.put(link)
 
         if data is not None and 'name' in data:
             name = data['name']
@@ -37,7 +39,13 @@ def processResults():
             platform = data['platform']
             condition = data['condition']
             url = data['origin']
-            db.insertURL(name, price, platform, condition, url, datetime.now())
+            rtt = time
+            db.insertURL(name, price, platform, condition, url, rtt, datetime.now())
+            print 'new entry inserted'
+
+        elif data == {}:
+            db.insertJunkURL(res[0], time, datetime.now())
+            print 'non-product but relevant pages (junk) url inserted'
 
 if __name__ == '__main__':
 
