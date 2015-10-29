@@ -135,15 +135,17 @@ class Database:
 
       # addEntry = ("INSERT INTO junkurl (url,rtt) VALUES (\'"+ url +"\'," + str(rtt) + ")")
 
-      addEntry = ("INSERT INTO junkurl (url, rtt, lastUpdate) VALUES (%s, %s, %s)")
-      data = (url, rtt, lastUpdate)
+      addEntry = ("INSERT INTO junkurl "
+                  "(url, rtt, lastUpdate, createdAt, updatedAt) "
+                  "VALUES (%s, %s, %s, %s, %s)")
+
+      data = (url, rtt, lastUpdate, datetime.now(), datetime.now())
 
       cursor.execute(addEntry, data)
 
       self.connection.commit()
       cursor.close()
       return True
-
 
   def junkQueried(self,url):
     cursor = self.connection.cursor()
@@ -166,6 +168,7 @@ class Database:
         queried = False
       else:
         queried = True
+
     cursor.close()
 
     return queried

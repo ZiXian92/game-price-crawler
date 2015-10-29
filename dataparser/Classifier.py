@@ -7,6 +7,7 @@ class Classifier(object):
     CONST_PLATFORMS = re.compile(r'\b(?:%s)\b' % '|'
                       .join(['Xbox One', 'Xbox 360', '3DS', 'PS3', 'PS4', 'Wii'
                               'PSP', 'PS Vita', 'PC']))
+
     CONST_MONEY = re.compile(r'\$?[\d,]+(\.\d*)?')
     mappings = {
         ('ds', 'nintendo ds'): '3DS',
@@ -32,7 +33,8 @@ class Classifier(object):
     def __init__(self):
       pass
 
-    # returns {} if page is within domain but not relevant
+    # returns {name:..} if it is a valid product page
+    # returns {} if page is relevant but a product page
     # returns None if page is not within domain
     def classify(self, page, url):
         title = str(page.title)
@@ -82,11 +84,11 @@ class RakutenPage(object):
 
     def getInfo(self):
         if len(self.page.find_all(attrs={"property":"og:type"})) == 0:
-            print "This is not a Rakuten product page - "
+            print "This is not a Rakuten product page"
             return self.data
 
         # looking into javascript contents
-        scriptContent = str(self.page.script.string)
+        scriptContent = self._rakutenGetScript()
         self.data['name'] = self._rakutenGetName(scriptContent)
         self.data['price'] = self._rakutenGetPrice(scriptContent)
         self.data['platform'] = self._rakutenGetPlatform(self.data['name'])
@@ -94,6 +96,18 @@ class RakutenPage(object):
         self.data['condition'] = None # Rakuten does not provide this field
 
         return self.data
+
+    def _rakutenGetScript(self):
+        try:
+            resultSet = self.page('script', {'type' : 'text/javascript'})
+            result = ''
+
+            for row in resultSet:
+                result += str(row)
+            return result
+
+        except:
+            return ''
 
     @staticmethod
     def _rakutenGetPrice(scriptContent):
@@ -106,10 +120,14 @@ class RakutenPage(object):
 
     @staticmethod
     def _rakutenGetName(scriptContent):
-        startPos = scriptContent.find('prod_name')
-        startPos = startPos + 13
-        endPos = scriptContent.find('\"', startPos)
-        return scriptContent[startPos:endPos]
+        try:
+            startPos = scriptContent.find('prod_name')
+            startPos = startPos + 13
+            endPos = scriptContent.find('\"', startPos)
+            #print scriptContent[startPos:endPos]
+            return scriptContent[startPos:endPos]
+        except:
+            return None
 
     @staticmethod
     def _rakutenGetPlatform(name):
@@ -127,15 +145,13 @@ class GametraderPage(object):
         self.url = url
 
     def getInfo(self):
-        # determine if product page
-        # try:
         gameInfo = self.page.select('table[cellpadding="2"] > tr')
-        if self._gametraderGetTitleTag(gameInfo) == "Title":
+        if self._gametraderIsProductPage(gameInfo):
             self.data['name'] = self._gametraderGetName(gameInfo)
             self.data['origin'] = self.url
-            shortenedInfoList = gameInfo[2:5]
+            gameInformationList = gameInfo[2:5]
 
-            for (count, info) in enumerate(shortenedInfoList):
+            for (count, info) in enumerate(gameInformationList):
                 infoHtml = info.contents # Price: 320.00 or Plat: Xbox
 
                 if count == 0:
@@ -149,10 +165,13 @@ class GametraderPage(object):
 
         else:
           print "This is not a Gametrader product page"
-        # except:
-        #  print "This is not a Gametrader product page"
 
         return self.data
+
+    # determine if it is product page
+    @staticmethod
+    def _gametraderIsProductPage(gameInfo):
+        return GametraderPage._gametraderGetTitleTag(gameInfo) == "Title"
 
     @staticmethod
     def _gametraderGetTitleTag(gameInfo):
@@ -193,7 +212,6 @@ class QisahnPage(object):
         self.url = url
 
     def getInfo(self):
-        # determine
         product = self._qisahnGetProductSection(self.page)
         if product:
             self.data['name'] = self._qisahnGetName(product)
