@@ -18,63 +18,84 @@ from urlparse import urlparse
 
 class Parser(object):
 
-  def __init__(self):
-    self.classifier = Classifier()
+    def __init__(self):
+        self.classifier = Classifier()
 
-  def parse(self, page, url):
-  #  try:
-      links = []
-      print "Currently parsing: " + url
-      soup = BeautifulSoup(page, 'html.parser')
+    def parse(self, page, url, time):
+        #  try:
+        links = []
+        print "Currently parsing: " + url
+        soup = BeautifulSoup(page, 'html.parser')
 
-      data = self.classifier.classify(soup, url)
+        data = self.classifier.classify(soup, url)
 
-      # get links only when the page is relevant
-      if data is not None:
-        links = self.getRelevantUris(soup, url)
+        # get links only when the page is relevant
+        if data is not None:
+            links = self.getRelevantUris(soup, url)
 
-      print 'No. of links requeued: ' + str(len(links))
-      return (links, data)
+        print 'No. of links retrieved: ' + str(len(links))
+        return (links, data, time)
 
-    # except:
-    #   print "Parser: cannot parse page"
-    #   return None
+        # except:
+        #   print "Parser: cannot parse page"
+        #   return None
 
-  # takes in a html page
-  def getRelevantUris(self, page, url):
+    # takes in a html page
+    def getRelevantUris(self, page, url):
 
-    # retrieve domain from url
-    parsed_uri = urlparse(url)
-    domain = '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
+        # extract domain from url
+        parsed_uri = urlparse(url)
+        domain = '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
 
-    listOfLinks = []
-    for link in page.find_all('a'):
-      listOfLinks.append(link.get('href'))
-    listOfLinks = self.concatRelativeLinks(listOfLinks, domain)
+        listOfLinks = []
+        for link in page.find_all('a'):
+            listOfLinks.append(link.get('href'))
 
-    # remove dups
-    links = list(set(listOfLinks))
-    return links
+        # clean up the links
+        listOfLinks = self.cleanLinks(listOfLinks, domain)
 
-  # concat relative links like /category -> www.def.com/category
-  def concatRelativeLinks(self, listOfLinks, domain):
-    newLinks = []
-    for link in listOfLinks:
-      if link is None or link.startswith('#') or link.startswith('.') or 'javascript' in link:
-        pass
-      elif self.isRelativeLink(link): ## check for dot
-        newLinks.append(domain + link)
-      else:
-        newLinks.append(link)
-    return newLinks
+        # remove dups
+        links = list(set(listOfLinks))
+        return links
 
-  def isRelativeLink(self, link):
-    frontUrl = link.split('?',1)[0]
-    if link.startswith('/'):
-      return True
-    if 'php' in frontUrl and '/' not in frontUrl:
-      return True
-    if len(link.split('.')) == 1:
-      return True
-    else:
-      return False
+    def cleanLinks(self, listOfLinks, domain):
+        newLinks = []
+        for link in listOfLinks:
+
+            if self.isErroneous(link):
+                pass
+
+            elif self.isRelativeLink(link):
+                concatLink = self.concatRelativeLink(domain, link)
+                newLinks.append(concatLink)
+
+            else:
+                newLinks.append(link) # absolute link
+
+        return newLinks
+
+    def isErroneous(self, link):
+        if link is None or link.startswith('#') or link.startswith('.'):
+            return True
+        if 'mailto' in link or 'javascript' in link:
+            return True
+        else:
+            return False
+
+    def concatRelativeLink(self, domain, link):
+        if link.startswith('/'):
+            return (domain + link[1:]) # avoid double slashes //
+
+        else:
+            return (domain + link)
+
+    def isRelativeLink(self, link):
+        frontUrl = link.split('?',1)[0]
+        if link.startswith('/'):
+            return True
+        if 'php' in frontUrl and '/' not in frontUrl: #php?param=1&param=2
+            return True
+        if len(link.split('.')) == 1: #games
+            return True
+        else:
+            return False
