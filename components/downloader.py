@@ -1,4 +1,4 @@
-import socket, ssl
+import socket, ssl, time
 from Queue import Queue
 from threading import Thread, BoundedSemaphore
 from httprequest import HttpRequests
@@ -50,10 +50,13 @@ class Downloader(object):
 				s.connect((req.getHeader("Host"), 80))
 
 			print "%s: Sending request" % (url)
+			start = time.time()
 			s.send(str(req))
 			fp = s.makefile('r', 2048)
 			res = ""
 			line = fp.readline()
+			end = time.time()
+			print end-start
 			while line!="\r\n" and line!="":
 				res+=line
 				line = fp.readline()
@@ -64,7 +67,7 @@ class Downloader(object):
 
 			if headers["statusCode"]==200:
 				res = fp.read()
-				self.resQueue.put((url, res))
+				self.resQueue.put((url, res, int((end-start)*1000)))
 				"""res = fp.readline()
 				if res!="":
 					print "%s: Downloading HTML" % (url)
