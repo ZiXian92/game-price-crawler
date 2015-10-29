@@ -33,7 +33,7 @@ class Parser(object):
       if data is not None:
         links = self.getRelevantUris(soup, url)
 
-      print len(links)
+      print 'No. of links requeued: ' + str(len(links))
       return (links, data)
 
     # except:
