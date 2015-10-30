@@ -17,12 +17,12 @@ class Database:
     table = (
       "CREATE TABLE `pricelist` ("
       # "   id Integer AUTO_INCREMENT PRIMARY KEY,"
-      "   name varchar(512) NOT NULL,"
+      "   name varchar(255) NOT NULL,"
       "   price float NOT NULL,"
-      "   platform varchar(512),"
-      "   cond varchar(512),"
+      "   platform varchar(255),"
+      "   cond varchar(255),"
       # "   url  varchar(1024) NOT NULL,"
-      "   url  varchar(512) NOT NULL PRIMARY KEY,"
+      "   url  varchar(255) NOT NULL PRIMARY KEY,"
       "   rtt integer,"
       "   lastUpdate datetime NOT NULL,"
       "   createdAt datetime NOT NULL,"
@@ -42,7 +42,7 @@ class Database:
 
     table = (
       "CREATE TABLE `junkurl` ("
-      "   url  varchar(512) NOT NULL PRIMARY KEY,"
+      "   url  varchar(255) NOT NULL PRIMARY KEY,"
       "   rtt integer,"
       "   lastUpdate datetime NOT NULL,"
       "   createdAt datetime NOT NULL,"
@@ -174,7 +174,7 @@ class Database:
     return queried
 
 # db = Database()
-# print db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario4", 50, "2015/10/10 10:10")
+# print db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario4", 50, "2015/10/30 10:10")
 # print db.queryByName("Mari")
 # print db.hasQueried("http://test/mario")
 # print db.hasQueried("http://test/mario1")

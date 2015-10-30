@@ -40,12 +40,19 @@ def processResults():
             condition = data['condition']
             url = data['origin']
             rtt = time
-            db.insertURL(name, price, platform, condition, url, rtt, datetime.now())
-            print 'new entry inserted'
+
+            try:
+                db.insertURL(name, price, platform, condition, url, rtt, datetime.now())
+                print 'new entry inserted'
+            except:
+                print 'Database insertion error'
 
         elif data == {}:
-            db.insertJunkURL(res[0], time, datetime.now())
-            print 'non-product but relevant pages (junk) url inserted'
+            try:
+                db.insertJunkURL(res[0], time, datetime.now())
+                print 'non-product but relevant pages (junk) url inserted'
+            except:
+                print 'Database insertion error'
 
 if __name__ == '__main__':
 
@@ -64,5 +71,4 @@ if __name__ == '__main__':
         print "Currently crawling: " + link
         time.sleep(2)
         d.download(link)
-
 

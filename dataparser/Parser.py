@@ -22,23 +22,23 @@ class Parser(object):
         self.classifier = Classifier()
 
     def parse(self, page, url, time):
-        #  try:
-        links = []
-        print "Currently parsing: " + url
-        soup = BeautifulSoup(page, 'html.parser')
+        try:
+            links = []
+            print "Currently parsing: " + url
+            soup = BeautifulSoup(page, 'html.parser')
 
-        data = self.classifier.classify(soup, url)
+            data = self.classifier.classify(soup, url)
 
-        # get links only when the page is relevant
-        if data is not None:
-            links = self.getRelevantUris(soup, url)
+            # get links only when the page is relevant
+            if data is not None:
+                links = self.getRelevantUris(soup, url)
 
-        print 'No. of links retrieved: ' + str(len(links))
-        return (links, data, time)
+            print 'No. of links retrieved: ' + str(len(links))
+            return (links, data, time)
 
-        # except:
-        #   print "Parser: cannot parse page"
-        #   return None
+        except:
+           print "Parser: cannot parse page"
+           return ([], None, time)
 
     # takes in a html page
     def getRelevantUris(self, page, url):
