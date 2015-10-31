@@ -6,15 +6,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
-    <link rel="stylesheet" href="../css/cosmo.min.css">
-    <link rel="stylesheet" href="../css/main.css">
+
+    <!-- flatly theme-->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
 
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
-
-    <script src="../scripts/main.js"></script>
 
     <title>Game Price Crawler</title>
 
@@ -26,9 +27,6 @@
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
                     <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
                 </button>
                 <a class="navbar-brand">Game Price Crawler</a>
             </div>
@@ -46,29 +44,30 @@
 
     <div class="container">
         <div class="row">
-            <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#myModal">
+<!--             <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#myModal">
                 Add New User
-            </button>
+            </button> -->
         </div>
         <div class="row">
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Video Game</th>
-                        <th>Platform</th>
                         <th>Price</th>
+                        <th>Platform</th>
                         <th>Condition</th>
                         <th>URL</th>
+                        <th>Response(ms)</th>
                     </tr>
                 </thead>
-                <tbody class = "listAccounts">
+                <tbody class = "listItems">
                 </tbody>
             </table>
         </div>
 
         <hr>
         <footer>
-            <p>&copy; Administrator website for Digital Content Store</p>
+            <p>&copy; Administrator website for Game Price Crawler</p>
         </footer>
 
     </div> <!-- End of container -->
@@ -103,54 +102,64 @@
                     </div>
 
                     <!-- ID AND LIKES TO BE ASSIGNED -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" id="">Submit</button>
-                </div>
-            </form>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-</div>
-
-<div class="modal fade" id="editAccountModal" tabindex="-1" role="dialog" aria-labelledby="editAccountLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Edit Account</h4>
-            </div>
-            <div id="editAccountBody" class="modal-body" data-email="" >
-                <form class="form-inline" id="editAccountForm">
-                    <div class="form-group">
-                        <label for="email">New Email</label>
-                        <input type="text" class="form-control" name="email">
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="">Submit</button>
                     </div>
-                    <div class="form-group">
-                        <label for="username">New Username</label>
-                        <input type="text" class="form-control" name="username">
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" class="form-control" name="password">
-                    </div>
-                    <br /><br />
-                    <div class="form-group">
-                        <label for="accountType">Account Type</label>
-                        <input type="text" class="form-control" name="accountType">
-                    </div>
-
-                    <!-- ID AND LIKES TO BE ASSIGNED -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" id="">Submit</button>
-                </div>
-            </form>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 </div>
 
 </html>
 
 <script>
+    $(function() {
+
+        getItems();
+
+        function getItems() {
+            $.ajax({
+                method: "GET",
+                url: "scripts/query.php",
+                data: {
+                    sortby: "item_id"
+                }
+            })
+            .done(function(data) {
+                console.log( "Displayed");
+                //console.log(data);
+                var list = JSON.parse(data);
+                console.log(list);
+                $('.listItems').html(renderItemTable(list));
+
+            })
+            .fail(function(msg) {
+                console.log("failed ");
+            });
+        }
+
+        function renderItemTable(arr){
+            var string ="";
+
+            for(var i=0;i<arr.length;i++) {
+
+                var platform = ((arr[i].platform === null) ? 'N.A' : arr[i].platform);
+                var cond = ((arr[i].cond === null) ? 'N.A' : arr[i].cond);
+                string +=
+                '<tr>' +
+                '<th scope="row">' + arr[i].name + '</th>' +
+                "<td>" + '$' + arr[i].price + "</td>" +
+                "<td>" + platform + "</td>" +
+                "<td>" + cond + "</td>" +
+                "<td>" + arr[i].url + "</td>" +
+                "<td>" + arr[i].rtt + "</td>" +
+                "</tr>"
+            }
+
+            return string;
+        }
+});
+
+</script>
