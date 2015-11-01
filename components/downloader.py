@@ -9,7 +9,7 @@ class Downloader(object):
 	def __init__(self, maxConcurrentRequests = NUMTHREAD_DEFAULT):
 		self.numThreads = maxConcurrentRequests
 		self.resourcePool = BoundedSemaphore(self.numThreads)
-		self.resQueue = Queue()
+		self.resQueue = Queue(100000)
 
 	# Downloads the HTML file at the given URL and writes to file with same name as URL.
 	# Blocks if there are more than the specified threshold concurrent requests running.
@@ -67,7 +67,7 @@ class Downloader(object):
 
 			if headers["statusCode"]==200:
 				res = fp.read()
-				self.resQueue.put((url, res, int((end-start)*1000)))
+				self.resQueue.put((url, res, int((end-start)*1000)), True)
 				"""res = fp.readline()
 				if res!="":
 					print "%s: Downloading HTML" % (url)
