@@ -1,12 +1,21 @@
 
 from Queue import Queue
+import os
 
 class URIQueue:
 
+# >>> for filename in os.listdir("."):
+# ...  if filename.startswith("cheese_"):
+# ...    os.rename(filename, filename[7:])
+
   #Initialize host URI queue
-  def __init__(self, host):
+  def __init__(self, counter, host):
+
     self.host = host
-    self.uriQueue = Queue()
+    self.counter = str(counter)
+    f = open("./queue/" + str(counter), 'w')
+    f.write(host + "\n")
+    f.close()
 
   #Get host name of the queue
   def getHostName(self):
@@ -14,15 +23,25 @@ class URIQueue:
 
   #Queue a uri
   def queueURI(self, uri):
-    self.uriQueue.put(uri)
+    f = open("./queue/" + self.counter, 'a')
+    f.write(uri + "\n")
     return True
 
   #Dequeue a uri, return None if empty queue
   def dequeueURI(self):
-    if self.uriQueue.empty():
+    f = open("./queue/" + self.counter, 'r')
+    w = open("./queue/" + self.counter + "temp", 'w')
+    w.write(f.readline())
+    uri = f.readline()
+    for line in f:
+      w.write(line)
+    f.close()
+    w.close()
+    os.remove("./queue/" + self.counter)
+    os.rename("./queue/" + self.counter + "temp", "./queue/" + self.counter)
+    if uri == "":
       return None
-    else:
-      return self.uriQueue.get(True)
+    return uri
 
 #A class to manage all the UriQueue
 class QueueManager:
@@ -33,17 +52,15 @@ class QueueManager:
     self.token = 0    #Token for round robin
 
   #Dequeue a URI, return None if no more URL left
-  def dequeue(self):
+  def get(self):
     uri = None
     current = int(self.token)
 
     while uri == None:
 
       uri = self.hosts[self.token].dequeueURI()
-      host = self.hosts[self.token].getHostName()
-
+      host = self.hosts[self.token].getHostName().replace(".txt", "")
       self.token = self.token + 1
-
       #Reset token
       if self.token >= len(self.hosts):
         self.token = 0
@@ -52,50 +69,46 @@ class QueueManager:
       # and no URL is found
       # Comment this part to make the queueManager a blocking function
       if self.token is current and uri == None:
+        print "No more url in queue"
         return None
 
-    return host + "/" + uri
+    return  host + "/" + uri
+    
 
   #Queue a URL
-  def queue(self, url):
-    host = url.split('/')[0]
-    uri  = url.split('/', 1)[1]
+  def put(self, urlInitial):
+    url = urlInitial.replace("https://", "")
+    url = url.replace("http://", "")
+
+    if url.find("/") == -1:
+      host = url
+      uri = " "
+    else:
+      host = url.split('/')[0]
+      uri  = url.split('/', 1)[1]
+
+    urlFinal = host
+
+    if urlInitial.find("https://") > -1:
+      urlFinal = "https://" + urlFinal
+    elif urlInitial.find("http://") > -1:
+      urlFinal = "http://" + urlFinal
 
     found = False
 
     for ahost in self.hosts:
       #To find queue with same host
-      if ahost.host == host:
+      # print "compare "+ ahost.host + " " + host
+      if ahost.host == urlFinal:
         ahost.queueURI(uri)
         found = True
 
     #Scenario when the same host is not found
     if found == False:
       #Create a new URI queue
-      newHost = URIQueue(host)
-      newHost.queueURI(uri)
-      self.hosts.append(newHost)
+      if urlFinal.find("qisahn") > -1 or urlFinal.find("gametrader") > -1:
+        newHost = URIQueue(len(self.hosts), urlFinal)
+        newHost.queueURI(uri)
+        self.hosts.append(newHost)
 
     return True
-
-
-# manager = QueueManager()
-# manager.queue("http://www.test1.org/abc/asbag/sduysd/sdcuysdg")
-# manager.queue("test1/123")
-# manager.queue("test2/3435")
-# manager.queue("test1/56556")
-# manager.queue("test2/hey")
-# manager.queue("test3/another")
-# manager.queue("test3/goign")
-# manager.queue("test1/???")
-
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()
-# print manager.dequeue()

@@ -2,8 +2,8 @@ from components.downloader import Downloader
 from components.QueueManager import QueueManager
 from components.Database import Database
 
-from dataparser.Classifier import Classifier
-from dataparser.Parser import Parser
+from DataParser.Classifier import Classifier
+from DataParser.Parser import Parser
 
 from datetime import date, datetime
 from threading import Thread
@@ -13,8 +13,16 @@ import time
 
 d = Downloader()
 
-urlQueue = Queue()
-
+urlQueue = QueueManager()
+urlQueue.put("https://gametrader.sg/index.php")
+urlQueue.put("https://www.gametrader.sg/game.php?platform=PS4")
+urlQueue.put("https://www.gametrader.sg/game.php?platform=Xbox%20360")
+urlQueue.put("https://www.gametrader.sg/game.php?platform=Wii")
+urlQueue.put("https://www.gametrader.sg/game.php?platform=PC")
+urlQueue.put("https://www.gametrader.sg/game.php?platform=PS%20Vita")
+urlQueue.put("https://www.gametrader.sg/game.php?platform=3DS")
+urlQueue.put("http://qisahn.com")
+    
 def processResults():
     parser = Parser()
     db = Database()
@@ -61,13 +69,13 @@ if __name__ == '__main__':
     resultProcessor.start()
 
     # load in links if queue empty
-    if urlQueue.empty():
-        seed = open('seed.txt', 'r')
-        for line in seed:
-            urlQueue.put(line)
+    # if urlQueue.empty():
+    #     seed = open('seed.txt', 'r')
+    #     for line in seed:
+    #         urlQueue.put(line)
 
     while(1):
-        link = urlQueue.get(True)
+        link = urlQueue.get()
         print "Currently crawling: " + link
         time.sleep(2)
         d.download(link)
