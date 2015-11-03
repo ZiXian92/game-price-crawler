@@ -2,6 +2,7 @@ import socket, ssl, time
 from Queue import Queue
 from threading import Thread, BoundedSemaphore
 from httprequest import HttpRequests
+from datetime import datetime
 
 # Defines the downloader component
 class Downloader(object):
@@ -14,10 +15,12 @@ class Downloader(object):
 	# Downloads the HTML file at the given URL and writes to file with same name as URL.
 	# Blocks if there are more than the specified threshold concurrent requests running.
 	def download(self, url):
+		print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Trying to get thread"
 		self.resourcePool.acquire()	# Blocking by default
+		print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Successfully acquired thread"
 		Thread(target=self.privateDownload, args=(url,)).start()
 
-	# Returns a tuple (url, htmlString)
+	# Returns a tuple (url, htmlString, RTT)
 	# Blocks until there is a result
 	def getResult(self):
 		return self.resQueue.get(True)
@@ -49,7 +52,7 @@ class Downloader(object):
 				# print "%s: Connecting to port 80" % (url)
 				s.connect((req.getHeader("Host"), 80))
 
-			print "%s: Sending request" % (url)
+			print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": %s: Sending request" % (url)
 			start = time.time()
 			s.send(str(req))
 			fp = s.makefile('r', 2048)
@@ -63,11 +66,14 @@ class Downloader(object):
 			res+=line
 
 			headers = Downloader.convertToHeaderObject(res)
-			print "%s: %d %s" % (url, headers["statusCode"], headers["statusMessage"])
+			print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": %s: %d %s" % (url, headers["statusCode"], headers["statusMessage"])
 
 			if headers["statusCode"]==200:
 				res = fp.read()
-				self.resQueue.put((url, res, int((end-start)*1000)), True)
+				try:
+					self.resQueue.put((url, res, int((end-start)*1000)), True, 0.5)
+				except:
+					print datetime.now().strftime("%d/%m/%Y %H:%M%S") + ": Result queue full, dropping "+url
 				"""res = fp.readline()
 				if res!="":
 					print "%s: Downloading HTML" % (url)
@@ -81,7 +87,7 @@ class Downloader(object):
 				else:
 					print "%s: No content to download" % (url) """
 			elif headers.get("Location")!=None:
-				print "%s: Redirecting to %s" % (url, headers["Location"])
+				print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": %s: Re: directing to %s" % (url, headers["Location"])
 				fp.close()
 				s.close()
 				self.privateDownload(headers["Location"])
@@ -89,9 +95,10 @@ class Downloader(object):
 			fp.close()
 		except Exception as e:
 			print str(e)
-			print "Unable to fetch resource %s" % (url)
+			print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Unable to fetch resource %s" % (url)
 		s.close()
 		self.resourcePool.release()
+		print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Thread released by " + url
 
 	# s must be a properly formatted HTTP response header string,
 	# each line ending with CRLF and the header ending with CRLF after the last line.
