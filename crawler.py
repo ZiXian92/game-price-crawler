@@ -46,7 +46,7 @@ def processResults():
         for link in links:
             if not db.hasQueried(link):
                 try:
-                    print "Insert temp " + link
+                    # print "Insert temp " + link
                     db.insertTemp(link)
                 except:
                     print 'Database insertion error 1'
