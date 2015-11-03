@@ -1,6 +1,7 @@
 
 from Queue import Queue
 import os
+import shutil
 
 class URIQueue:
 
@@ -33,12 +34,11 @@ class URIQueue:
     w = open("./queue/" + self.counter + "temp", 'w')
     w.write(f.readline())
     uri = f.readline()
-    for line in f:
-      w.write(line)
+    w.write(f.read())
     f.close()
     w.close()
-    os.remove("./queue/" + self.counter)
-    os.rename("./queue/" + self.counter + "temp", "./queue/" + self.counter)
+    shutil.copy2("./queue/" + self.counter + "temp", "./queue/" + self.counter)
+    os.remove("./queue/" + self.counter + "temp")
     if uri == "":
       return None
     return uri

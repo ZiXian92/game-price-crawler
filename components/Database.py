@@ -60,6 +60,23 @@ class Database:
     else:
         print("OK")
 
+    table = (
+      "CREATE TABLE `tempurl` ("
+      "   url  varchar(255) NOT NULL PRIMARY KEY"
+      ")"
+    )
+
+    try:
+      cursor.execute(table)
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
+            print("already exists.")
+        else:
+            print(err.msg)
+    else:
+        print("OK")
+
+
     cursor.close()
 
   def queryByName(self, name):
@@ -107,8 +124,51 @@ class Database:
       cursor.close()
       return True
 
+  def inQueue(self, url):
+    cursor = self.connection.cursor()
+
+    cursor.execute("SELECT * FROM tempurl WHERE url = %s", (url,))
+
+    queried = False
+
+    for(url) in cursor:
+      queried = True
+
+    cursor.close()
+
+    return queried
+
+  def insertTemp(self, url):
+    if self.inQueue(url):
+      return False
+    else:
+      cursor = self.connection.cursor()
+
+      # addEntry = ("INSERT INTO junkurl (url,rtt) VALUES (\'"+ url +"\'," + str(rtt) + ")")
+
+      cursor.execute("INSERT INTO tempurl (url) VALUES (%s)", (url,))
+
+      self.connection.commit()
+      cursor.close()
+      return True
+
+  def removeTemp(self, url):
+    cursor = self.connection.cursor()
+
+    # addEntry = ("INSERT INTO junkurl (url,rtt) VALUES (\'"+ url +"\'," + str(rtt) + ")")
+
+    deleteEntry = ("DELETE FROM tempurl WHERE url = %s")
+
+    data = (url,)
+
+    cursor.execute(deleteEntry, data)
+
+    self.connection.commit()
+    cursor.close()
+    return True
+
   def hasQueried(self, url):
-    return self.productQueried(url) and self.junkQueried(url)
+    return self.productQueried(url) and self.junkQueried(url) and self.inQueue(url)
 
   def productQueried(self,url):
     cursor = self.connection.cursor()
@@ -173,7 +233,7 @@ class Database:
 
     return queried
 
-# db = Database()
+db = Database()
 # print db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario4", 50, "2015/10/30 10:10")
 # print db.queryByName("Mari")
 # print db.hasQueried("http://test/mario")
@@ -181,3 +241,8 @@ class Database:
 # print db.hasQueried("http://test/mario4")
 # print db.insertJunkURL("rubbishes", 50)
 # print db.junkQueried("rubbishs")
+db.insertTemp("dd")
+db.insertTemp("ee")
+db.removeTemp("dd")
+print db.inQueue("dd")
+print db.inQueue("ee")
