@@ -128,7 +128,7 @@ class Database:
   def inQueue(self, url):
     cursor = self.connection.cursor()
 
-    cursor.execute("SELECT * FROM tempurl WHERE url = %s", (url,))
+    cursor.execute("SELECT * FROM tempurl WHERE url like %s", ("%"+url,))
 
     queried = False
 
@@ -158,9 +158,9 @@ class Database:
 
     # addEntry = ("INSERT INTO junkurl (url,rtt) VALUES (\'"+ url +"\'," + str(rtt) + ")")
 
-    deleteEntry = ("DELETE FROM tempurl WHERE url = %s")
+    deleteEntry = ("DELETE FROM tempurl WHERE url like %s")
 
-    data = (url,)
+    data = ("%" + url,)
 
     cursor.execute(deleteEntry, data)
 
@@ -169,7 +169,7 @@ class Database:
     return True
 
   def hasQueried(self, url):
-    return self.productQueried(url) and self.junkQueried(url) and self.inQueue(url)
+    return self.productQueried(url) or self.junkQueried(url) or self.inQueue(url)
 
   def productQueried(self,url):
     cursor = self.connection.cursor()
@@ -234,7 +234,7 @@ class Database:
 
     return queried
 
-db = Database()
+# db = Database()
 # print db.insertURL("Mario Cart", 25.03, "3DS", "Pre-owned", "http://test/mario4", 50, "2015/10/30 10:10")
 # print db.queryByName("Mari")
 # print db.hasQueried("http://test/mario")
@@ -242,8 +242,3 @@ db = Database()
 # print db.hasQueried("http://test/mario4")
 # print db.insertJunkURL("rubbishes", 50)
 # print db.junkQueried("rubbishs")
-db.insertTemp("dd")
-db.insertTemp("ee")
-db.removeTemp("dd")
-print db.inQueue("dd")
-print db.inQueue("ee")

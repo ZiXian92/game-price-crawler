@@ -2,6 +2,8 @@
 from Queue import Queue
 import os
 import shutil
+from os import listdir
+from os.path import isfile, join
 
 class URIQueue:
 
@@ -10,13 +12,16 @@ class URIQueue:
 # ...    os.rename(filename, filename[7:])
 
   #Initialize host URI queue
-  def __init__(self, counter, host):
+  def __init__(self, counter, host, resume):
 
     self.host = host
     self.counter = str(counter)
-    f = open("./queue/" + str(counter), 'w')
-    f.write(host + "\n")
-    f.close()
+    if not resume:
+      f = open("./queue/" + str(counter), 'w')
+      f.write(host + "\n")
+      f.close()
+
+
 
   #Get host name of the queue
   def getHostName(self):
@@ -50,6 +55,18 @@ class QueueManager:
   def __init__(self):
     self.hosts = [];  #An array to store all the uri queue
     self.token = 0    #Token for round robin
+    onlyfiles = [ f for f in listdir("./queue/") if isfile(join("./queue/",f)) ]
+    print str(onlyfiles)
+    for afile in onlyfiles:
+      # print afile
+      f = open("./queue/" + afile, 'r')
+      url = f.readline()
+      url = url.replace('\n','')
+      f.close()
+
+      newHost = URIQueue(len(self.hosts), url, True)
+      self.hosts.append(newHost)
+
 
   #Dequeue a URI, return None if no more URL left
   def get(self):
@@ -107,8 +124,10 @@ class QueueManager:
     if found == False:
       #Create a new URI queue
       if urlFinal.find("qisahn") > -1 or urlFinal.find("gametrader") > -1:
-        newHost = URIQueue(len(self.hosts), urlFinal)
+        newHost = URIQueue(len(self.hosts), urlFinal, False)
         newHost.queueURI(uri)
         self.hosts.append(newHost)
 
     return True
+
+# x = QueueManager()

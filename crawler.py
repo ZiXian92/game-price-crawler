@@ -46,6 +46,7 @@ def processResults():
         for link in links:
             if not db.hasQueried(link):
                 try:
+                    print "Insert temp " + link
                     db.insertTemp(link)
                 except:
                     print 'Database insertion error 1'
@@ -60,7 +61,7 @@ def processResults():
             rtt = time
 
             try:
-                db.removeTemp(url)
+                # db.removeTemp(url)
                 db.insertURL(name, price, platform, condition, url, rtt, datetime.now())
                 print 'new entry inserted'
             except:
@@ -69,7 +70,7 @@ def processResults():
         elif data == {}:
 
             try:
-                db.removeTemp(res[0])
+                # db.removeTemp(res[0])
                 db.insertJunkURL(res[0], time, datetime.now())
                 print 'non-product but relevant pages (junk) url inserted'
             except:
