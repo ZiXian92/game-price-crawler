@@ -62,7 +62,8 @@ class Database:
 
     table = (
       "CREATE TABLE `tempurl` ("
-      "   url  varchar(255) NOT NULL PRIMARY KEY"
+      "   id INTEGER AUTO_INCREMENT PRIMARY KEY,"
+      "   url  varchar(255) NOT NULL"
       ")"
     )
 
@@ -135,7 +136,7 @@ class Database:
       queried = True
 
     cursor.close()
-
+    # print "Is it in queue " + str(queried)
     return queried
 
   def insertTemp(self, url):

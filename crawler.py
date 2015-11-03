@@ -48,7 +48,7 @@ def processResults():
                 try:
                     db.insertTemp(link)
                 except:
-                    print 'Database insertion error'
+                    print 'Database insertion error 1'
                 urlQueue.put(link)
 
         if data is not None and 'name' in data:
@@ -64,15 +64,16 @@ def processResults():
                 db.insertURL(name, price, platform, condition, url, rtt, datetime.now())
                 print 'new entry inserted'
             except:
-                print 'Database insertion error'
+                print 'Database insertion error 2'
 
         elif data == {}:
+
             try:
-                db.removeTemp(url)
+                db.removeTemp(res[0])
                 db.insertJunkURL(res[0], time, datetime.now())
                 print 'non-product but relevant pages (junk) url inserted'
             except:
-                print 'Database insertion error'
+                print 'Database insertion error 3'
 
 if __name__ == '__main__':
 
