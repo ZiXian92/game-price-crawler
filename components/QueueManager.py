@@ -128,7 +128,7 @@ class QueueManager:
     #Scenario when the same host is not found
     if found == False:
       #Limit the crawl region to be only the following host to avoid redundant crawling
-      if urlFinal.find("rakuten") > -1 &&  urlFinal.find("qisahn") > -1 or urlFinal.find("gametrader") > -1:
+      if urlFinal.find("rakuten") > -1 or  urlFinal.find("qisahn") > -1 or urlFinal.find("gametrader") > -1:
         #Create a new URI queue
         newHost = URIQueue(len(self.hosts), urlFinal, False)
         newHost.queueURI(uri)
