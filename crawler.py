@@ -17,23 +17,10 @@ urlQueue = QueueManager()
 
 #Seed the queueManager if some initial url
 #URL for gameTrader
-urlQueue.put("https://gametrader.sg/index.php")
-urlQueue.put("https://www.gametrader.sg/game.php?platform=PS4")
-urlQueue.put("https://www.gametrader.sg/game.php?platform=Xbox%20360")
-urlQueue.put("https://www.gametrader.sg/game.php?platform=Wii")
-urlQueue.put("https://www.gametrader.sg/game.php?platform=PC")
-urlQueue.put("https://www.gametrader.sg/game.php?platform=PS%20Vita")
-urlQueue.put("https://www.gametrader.sg/game.php?platform=3DS")
+f = open("./seed.txt")
 
-#URL for qisahn
-urlQueue.put("http://qisahn.com")
-
-#URL for Rakuten
-urlQueue.put("http://www.rakuten.com/loc/xbox-360-games/62508.html")
-urlQueue.put("http://www.rakuten.com/loc/PC-Mac-Games/335.html")
-urlQueue.put("http://www.rakuten.com/sr/searchresults.aspx?tcid=16738")
-urlQueue.put("http://www.rakuten.com/sr/searchresults.aspx?tcid=16729")
-urlQueue.put("http://www.rakuten.com/loc/wii-games/63096.html")
+for line in f:
+    urlQueue.put(line)
 
 def processResults():
     parser = Parser()
