@@ -44,8 +44,6 @@ def processResults():
                 except:
                     print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' Database insertion error 1'
 
-                urlQueue.put(link)
-
                 try:
                     urlQueue.put(link)
                 except:
