@@ -27,7 +27,9 @@ def processResults():
     parser = Parser()
     db = Database()
     while True:
+	# print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Polling result"
         res = d.getResult() # Blocking dequeue
+	# print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Poll success"
 
         # res[0] is URL, res[1] is HTML, res[2] is response time
         info = parser.parse(res[1], res[0], res[2])
@@ -43,8 +45,15 @@ def processResults():
                     # print "Insert temp " + link
                     db.insertTemp(link)
                 except:
-                    print 'Database insertion error 1'
+                    print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' Database insertion error 1'
                 urlQueue.put(link)
+		# print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Inserting link to URL Queue"
+		try:
+                	urlQueue.put(link)
+		except:
+			print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": URL Queue full, dropping "+link
+			continue
+		# print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Successfully insert link to URL Queue"
 
         if data is not None and 'name' in data:
             name = data['name']
@@ -57,18 +66,18 @@ def processResults():
             try:
                 # db.removeTemp(url)
                 db.insertURL(name, price, platform, condition, url, rtt, datetime.now())
-                print 'new entry inserted'
+                print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ': new entry inserted'
             except:
-                print 'Database insertion error 2'
+                print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ': Database insertion error 2'
 
         elif data == {}:
 
             try:
                 # db.removeTemp(res[0])
                 db.insertJunkURL(res[0], time, datetime.now())
-                print 'non-product but relevant pages (junk) url inserted'
+                print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ': non-product but relevant pages (junk) url inserted'
             except:
-                print 'Database insertion error 3'
+                print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ': Database insertion error 3'
 
 if __name__ == '__main__':
 
@@ -86,5 +95,10 @@ if __name__ == '__main__':
         link = urlQueue.get()
         print "Currently crawling: " + link
         time.sleep(2)
+	# print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Get link from URL Queue"
+    # link = urlQueue.get(True)
+	# print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Successfully get link from URL Queue"
+    # print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Currently crawling: " + link
+    # time.sleep(1)
         d.download(link)
 

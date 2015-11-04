@@ -6,8 +6,8 @@ from mysql.connector import errorcode
 class Database:
   def __init__(self):
     self.connection = mysql.connector.connect(
-                              user='',
-                              password='',
+                              user='zixian',
+                              password='LiveFlight2014',
                               host='localhost',
                               database='test'
                       )
