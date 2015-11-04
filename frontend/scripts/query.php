@@ -1,8 +1,8 @@
 <?php
-$servername = "";
-$username = "";
-$password = "";
-$dbname = "";
+$servername = "localhost";
+$username = "zixian";
+$password = "LiveFlight2014";
+$dbname = "cs3103";
 
 $where = " WHERE ";
 $and = " AND ";
