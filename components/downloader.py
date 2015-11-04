@@ -4,14 +4,15 @@ from threading import Thread, BoundedSemaphore
 from httprequest import HttpRequests
 from datetime import datetime
 
+
 # Defines the downloader component
 class Downloader(object):
-	NUMTHREAD_DEFAULT = 4
+    NUMTHREAD_DEFAULT = 4
 
 	# Limit maximum number of threads
 	# Semaphore to enforce upper limit
 	# Restrict result queue size to prevent out-of-memory
-	def __init__(self, maxConcurrentRequests = NUMTHREAD_DEFAULT):
+    def __init__(self, maxConcurrentRequests = NUMTHREAD_DEFAULT):
 		self.numThreads = maxConcurrentRequests
 		self.resourcePool = BoundedSemaphore(self.numThreads)
 		self.resQueue = Queue(100000)
@@ -19,7 +20,7 @@ class Downloader(object):
 	# Dispatches a separate thread to download file.
 	# Downloads the HTML file at the given URL and writes to file with same name as URL.
 	# Blocks if there are more than the specified threshold concurrent requests running.
-	def download(self, url):
+    def download(self, url):
 		print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Trying to get thread"
 		self.resourcePool.acquire()	# Blocking by default
 		print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Successfully acquired thread"
@@ -27,11 +28,11 @@ class Downloader(object):
 
 	# Returns a tuple (url, htmlString, RTT)
 	# Blocks until there is a result
-	def getResult(self):
+    def getResult(self):
 		return self.resQueue.get(True)
 
 	# Private
-	def privateDownload(self, url):
+    def privateDownload(self, url):
 		if url==None:
 			return
 
@@ -45,7 +46,7 @@ class Downloader(object):
 
 		# Form HTTP request
 		req = HttpRequests.get(url, {"Connection": "close", "User-Agent": "game-price-crawler", "Accept": "text/html"})
-		
+
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 		# Use TLS socket if is HTTPS
@@ -87,7 +88,7 @@ class Downloader(object):
 					self.resQueue.put((url, res, int((end-start)*1000)), True, 0.5)
 				except:
 					print datetime.now().strftime("%d/%m/%Y %H:%M%S") + ": Result queue full, dropping "+url
-			
+
 			# A redirect response, follow the redirect link
 			elif headers.get("Location")!=None:
 				print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": %s: Re: directing to %s" % (url, headers["Location"])
@@ -99,7 +100,7 @@ class Downloader(object):
 		except Exception as e:
 			print str(e)
 			print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Unable to fetch resource %s" % (url)
-		
+
 		# Close socket and allow other threads to be spawned
 		s.close()
 		self.resourcePool.release()
@@ -107,8 +108,8 @@ class Downloader(object):
 
 	# s must be a properly formatted HTTP response header string,
 	# each line ending with CRLF and the header ending with CRLF after the last line.
-	@staticmethod
-	def convertToHeaderObject(s):
+    @staticmethod
+    def convertToHeaderObject(s):
 		obj = {}
 		sidx = s.find(" ")+1
 		eidx = s.find(" ", sidx)

@@ -33,19 +33,19 @@ class HttpRequest:
 	@staticmethod
 	def getHostFromUrl(url):
 		startIndex = url.find("//")
-		startIndex = 0 if startIndex==-1 else startIndex+2
+		startIndex = 0 if startIndex == -1 else startIndex+2
 		endIndex = url.find("/", startIndex)
-		endIndex = len(url) if endIndex==-1 else endIndex
+		endIndex = len(url) if endIndex == -1 else endIndex
 		queryIndex = url.find("?", startIndex)
-		queryIndex = endIndex if queryIndex==-1 else queryIndex
-		endIndex = queryIndex if queryIndex<endIndex else endIndex
+		queryIndex = endIndex if queryIndex == -1 else queryIndex
+		endIndex = queryIndex if queryIndex < endIndex else endIndex
 		return url[startIndex: endIndex]
 
 	# Gets the resource path from the given URL
 	@staticmethod
 	def getUriFromUrl(url):
 		startIndex = url.find("//")
-		startIndex = 0 if startIndex==-1 else startIndex+2
+		startIndex = 0 if startIndex == -1 else startIndex+2
 		startIndex = url.find("/", startIndex)
 		if startIndex!=-1:
 			return url[startIndex:]
@@ -85,4 +85,4 @@ class HttpGet(HttpRequest):
 		super(HttpGet, self).__init__(url, headers)
 		self.method = "GET"
 
-	
+

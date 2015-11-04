@@ -2,8 +2,8 @@ from components.downloader import Downloader
 from components.QueueManager import QueueManager
 from components.Database import Database
 
-from DataParser.Classifier import Classifier
-from DataParser.Parser import Parser
+from dataparser.Classifier import Classifier
+from dataparser.Parser import Parser
 
 from datetime import date, datetime
 from threading import Thread
@@ -43,14 +43,14 @@ def processResults():
                     db.insertTemp(link)
                 except:
                     print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ' Database insertion error 1'
+
                 urlQueue.put(link)
 
-
-		try:
-        	       urlQueue.put(link)
-		except:
-			print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": URL Queue full, dropping "+link
-			continue
+                try:
+                    urlQueue.put(link)
+                except:
+                    print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": URL Queue full, dropping " + link
+                    continue
 
         if data is not None and 'name' in data:
             name = data['name']
@@ -76,7 +76,7 @@ def processResults():
                 db.removeTemp(res[0])
                 # Add a junk url into db
                 db.insertJunkURL(res[0], time, datetime.now())
-                print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ': non-product but relevant pages (junk) url inserted'
+                print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ': non-product but relevant pages url inserted'
             except:
                 print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ': Database insertion error 3'
 
@@ -85,7 +85,6 @@ if __name__ == '__main__':
     resultProcessor = Thread(target=processResults)
 
     resultProcessor.start()
-
 
     while(1):
         link = urlQueue.get()
