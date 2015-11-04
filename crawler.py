@@ -14,12 +14,6 @@ import time
 d = Downloader()
 
 urlQueue = QueueManager()
-urlQueue.put("https://www.gametrader.sg/game_pg.php?post_id=142206&title=Ninja+Gaiden+Sigma+Plus&platform=PS%20Vita&seller=GeneralW")
-urlQueue.put("game_pg.php?post_id=109328&title=Shin+sangoku+musou+7+%28R3%29&platform=PS Vita&seller=lee")
-urlQueue.put("game_pg.php?title=Shin sangoku musou 7 empires (Chinese Version )&seller=Kratos357&platform=PS3")
-urlQueue.put("game_pg.php?post_id=&title=Ninja+Gaiden+Sigma+Plus&platform=PS Vita&seller=GeneralW")
-urlQueue.put("game_pg.php?post_id=142396&title=NBA+2K14+%28Mint%29&platform=Xbox 360&seller=acez7k")
-urlQueue.put("game_pg.php?post_id=&title=J+stars+Victory+VS+plus+%28Code+Unredeem%29&platform=PS4&seller=ebenjilion")
 urlQueue.put("https://gametrader.sg/index.php")
 urlQueue.put("https://www.gametrader.sg/game.php?platform=PS4")
 urlQueue.put("https://www.gametrader.sg/game.php?platform=Xbox%20360")
@@ -28,7 +22,7 @@ urlQueue.put("https://www.gametrader.sg/game.php?platform=PC")
 urlQueue.put("https://www.gametrader.sg/game.php?platform=PS%20Vita")
 urlQueue.put("https://www.gametrader.sg/game.php?platform=3DS")
 urlQueue.put("http://qisahn.com")
-    
+
 def processResults():
     parser = Parser()
     db = Database()
