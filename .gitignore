@@ -1,5 +1,6 @@
 *.pyc
 dataparser/pages/
+queue/
 rakuten*
 gametrader*
 qisahn*

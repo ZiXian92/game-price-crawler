@@ -13,6 +13,7 @@
 
     <!-- flatly theme-->
     <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/main.css">
 
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
@@ -43,12 +44,59 @@
     </nav>
 
     <div class="container">
-        <div class="row">
-<!--             <button type="button" class="btn btn-primary btn-md" data-toggle="modal" data-target="#myModal">
-                Add New User
-            </button> -->
-        </div>
-        <div class="row">
+
+        <form role="form" id="searchForm">
+          <div class="form-group">
+            <label for="searchTerm">Search:</label>
+            <input type="text" class="form-control" id="searchTerm">
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <select class="form-control" id="platformSelect">
+                  <option value="">Platform</option>
+                  <option value="3DS">3DS</option>
+                  <option value="Playstation 4">Playstation 4</option>
+                  <option value="PS Vita">PS Vita</option>
+                  <option value="Xbox 360">Five</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <select class="form-control" id="conditionSelect">
+                  <option value="">Condition</option>
+                  <option value="Pre-owned">Pre-owned</option>
+                  <option value="New">New</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group col-md-6">
+                <label for="Low">Low</label>
+                <input type="number" class="form-control" id="Low" placeholder="Low">
+              </div>
+              <div class="form-group col-md-6">
+                <label for="High">High</label>
+                <input type="number" class="form-control" id="High" placeholder="High">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-default" id="only-btn">Submit</button>
+        </form>
+
+        <div class="row" id="minmax-row">
+          <table class="table table-bordered" id="minmax-table">
+              <thead>
+                <tr>
+                  <th>Min</th>
+                  <th id="minPrice">-</th>
+                  <th>Max</th>
+                  <th id="maxPrice">-</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+
+        <div id="row-contain-table" class="row">
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -74,44 +122,6 @@
 
 </body>
 
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Add a new Account</h4>
-            </div>
-            <div class="modal-body">
-                <form class="form-inline" id="addNewAccountForm">
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" class="form-control" name ="username">
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="text" class="form-control" name="email">
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" class="form-control" name="password">
-                    </div>
-                    <br /><br />
-                    <div class="form-group">
-                        <label for="accountType">Account Type</label>
-                        <input type="text" class="form-control" name="accountType">
-                    </div>
-
-                    <!-- ID AND LIKES TO BE ASSIGNED -->
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary" id="">Submit</button>
-                    </div>
-                </form>
-            </div><!-- /.modal-content -->
-        </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-</div>
-
 </html>
 
 <script>
@@ -131,7 +141,7 @@
                 console.log( "Displayed");
                 //console.log(data);
                 var list = JSON.parse(data);
-                console.log(list);
+                //console.log(list);
                 $('.listItems').html(renderItemTable(list));
 
             })
@@ -159,6 +169,43 @@
             }
 
             return string;
+        }
+
+        $('#searchForm').submit(function(e){
+          e.preventDefault();
+          console.log("submit search item form");
+          var platform = $( "#platformSelect" ).val();
+          var condition = $( "#conditionSelect" ).val();
+
+          //prepare array
+          var params = {
+            searchTerm : $( "#searchTerm" ).val(),
+            platform: $( "#platformSelect" ).val(),
+            condition: $( "#conditionSelect" ).val(),
+            lowPrice: $( "#Low" ).val(),
+            highPrice: $( "#High" ).val()
+          };
+
+          console.log(params);
+          pushRequest(params);
+        });
+
+        function pushRequest(params) {
+          $.ajax({
+            method: "GET",
+            url: "scripts/query.php",
+            data: params
+          })
+
+          .done(function(data) {
+            //console.log(data);
+            var list = JSON.parse(data);
+            //console.log(list);
+            $('.listItems').html(renderItemTable(list));
+          })
+          .fail(function(msg) {
+            console.log("failed in modifying item");
+          });
         }
 });
 
