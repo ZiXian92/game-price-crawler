@@ -17,6 +17,7 @@ class HttpRequest:
 	# url: The URL string
 	# headers(Optional): Dictionary of header name string to header value string
 	def __init__(self, url, headers={}):
+		# Construct bare essential of HTTP request
 		if url==None:
 			self.uri = headers["Host"] = ""
 			self.isHttps = False
@@ -70,6 +71,7 @@ class HttpRequest:
 	def setHeader(self, header, value):
 		self.headers[header] = value
 
+	# Convert to string form for sending over socket
 	def __str__(self):
 		reqStr = self.method + " " + self.uri + " " + HttpRequest.protocol + "\r\n"
 		for header, value in self.headers.iteritems():

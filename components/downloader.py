@@ -7,11 +7,16 @@ from datetime import datetime
 # Defines the downloader component
 class Downloader(object):
 	NUMTHREAD_DEFAULT = 4
+
+	# Limit maximum number of threads
+	# Semaphore to enforce upper limit
+	# Restrict result queue size to prevent out-of-memory
 	def __init__(self, maxConcurrentRequests = NUMTHREAD_DEFAULT):
 		self.numThreads = maxConcurrentRequests
 		self.resourcePool = BoundedSemaphore(self.numThreads)
 		self.resQueue = Queue(100000)
 
+	# Dispatches a separate thread to download file.
 	# Downloads the HTML file at the given URL and writes to file with same name as URL.
 	# Blocks if there are more than the specified threshold concurrent requests running.
 	def download(self, url):
@@ -30,7 +35,7 @@ class Downloader(object):
 		if url==None:
 			return
 
-		# Chop of any trailing CRLF or LF
+		# Chop off any trailing CRLF or LF
 		crIndex = url.find("\r")
 		lfIndex = url.find("\n")
 		if (crIndex==-1) != (lfIndex==-1):
@@ -38,54 +43,52 @@ class Downloader(object):
 		elif crIndex!=-1:
 			url = url[0:min(crIndex, lfIndex)]
 
+		# Form HTTP request
 		req = HttpRequests.get(url, {"Connection": "close", "User-Agent": "game-price-crawler", "Accept": "text/html"})
+		
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+		# Use TLS socket if is HTTPS
 		try:
 			if req.isSecureProtocol():
-				# print "%s: Using TLS socket" % (url)
 				s = ssl.wrap_socket(s)
-				# print "%s: Connecting to port 443" % (url)
 				s.connect((req.getHeader("Host"), 443))
-				# print "%s: Doing handshake over TLS" % (url)
 				s.do_handshake()
 			else:
-				# print "%s: Connecting to port 80" % (url)
 				s.connect((req.getHeader("Host"), 80))
 
 			print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": %s: Sending request" % (url)
 			start = time.time()
+
+			# Send request
 			s.send(str(req))
+
+			# Use temporary file to buffer socket input
 			fp = s.makefile('r', 2048)
 			res = ""
 			line = fp.readline()
 			end = time.time()
 			print end-start
+
+			# Read only the response header
 			while line!="\r\n" and line!="":
 				res+=line
 				line = fp.readline()
 			res+=line
 
+			# Convert header string into object for easy access of header fields
 			headers = Downloader.convertToHeaderObject(res)
 			print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": %s: %d %s" % (url, headers["statusCode"], headers["statusMessage"])
 
+			# Status OK, proceed to download
 			if headers["statusCode"]==200:
 				res = fp.read()
 				try:
 					self.resQueue.put((url, res, int((end-start)*1000)), True, 0.5)
 				except:
 					print datetime.now().strftime("%d/%m/%Y %H:%M%S") + ": Result queue full, dropping "+url
-				"""res = fp.readline()
-				if res!="":
-					print "%s: Downloading HTML" % (url)
-					filename = (req.getHeader("Host")+req.getPath()).replace("/", "_")
-					f = open(filename, 'w')
-					while res!="":
-						f.write(res)
-						res = fp.readline()
-					f.close()
-					print "%s: Download complete" % (url)
-				else:
-					print "%s: No content to download" % (url) """
+			
+			# A redirect response, follow the redirect link
 			elif headers.get("Location")!=None:
 				print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": %s: Re: directing to %s" % (url, headers["Location"])
 				fp.close()
@@ -96,6 +99,8 @@ class Downloader(object):
 		except Exception as e:
 			print str(e)
 			print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Unable to fetch resource %s" % (url)
+		
+		# Close socket and allow other threads to be spawned
 		s.close()
 		self.resourcePool.release()
 		print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": Thread released by " + url
