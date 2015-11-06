@@ -33,11 +33,11 @@
             </div>
             <div id="navbar" class="navbar-collapse collapse">
                 <div class="navbar-right"> <!--align right-->
-                    <ul class="nav navbar-nav">
+<!--                     <ul class="nav navbar-nav">
                         <li class="active">
                             <a href="index.html">Accounts</a>
                         </li>
-                    </ul>
+                    </ul> -->
                 </div>
             </div><!--/.navbar-collapse -->
         </div>
@@ -80,17 +80,17 @@
             </div>
           </div>
 
-          <button type="submit" class="btn btn-default" id="only-btn">Submit</button>
+          <button type="submit" class="btn btn-success pull-right" id="only-btn">Submit</button>
         </form>
 
         <div class="row" id="minmax-row">
           <table class="table table-bordered" id="minmax-table">
               <thead>
                 <tr>
-                  <th>Min</th>
-                  <th id="minPrice">-</th>
-                  <th>Max</th>
-                  <th id="maxPrice">-</th>
+                  <th>Price Range</th>
+                  <th style="background-color: #ecf0f1" id="rangePrice">-</th>
+                  <th>Average Price</th>
+                  <th style="background-color: #ecf0f1" id="avgPrice">-</th>
                 </tr>
               </thead>
             </table>
@@ -127,28 +127,8 @@
 <script>
     $(function() {
 
-        getItems();
-
-        function getItems() {
-            $.ajax({
-                method: "GET",
-                url: "scripts/query.php",
-                data: {
-                    searchTerm: ""
-                }
-            })
-            .done(function(data) {
-                console.log( "Displayed");
-                //console.log(data);
-                var list = JSON.parse(data);
-                //console.log(list);
-                $('.listItems').html(renderItemTable(list));
-
-            })
-            .fail(function(msg) {
-                console.log("failed ");
-            });
-        }
+        // for first initialisation
+        pushRequest({searchTerm : ""});
 
         function renderItemTable(arr){
             var string ="";
@@ -202,10 +182,26 @@
             var list = JSON.parse(data);
             //console.log(list);
             $('.listItems').html(renderItemTable(list));
+
+            var listOfPrices = list.map(function(obj){
+                return obj.price;
+            });
+
+            priceStats = calculateStatistics(listOfPrices);
+            $('#rangePrice').html('$' + priceStats[0] + '  ~  $' + priceStats[1]);
+            $('#avgPrice').html('$' + priceStats[2]);
           })
           .fail(function(msg) {
             console.log("failed in modifying item");
           });
+        }
+
+        function calculateStatistics(listOfPrices) {
+            var max = Math.max.apply(Math, listOfPrices);
+            var min = Math.min.apply(Math, listOfPrices);
+            var sum = listOfPrices.reduce(function(a, b) { return a + b; });
+            var avg = (sum / listOfPrices.length).toFixed(2);
+            return [min, max, avg];
         }
 });
 

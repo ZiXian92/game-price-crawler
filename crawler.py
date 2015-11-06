@@ -11,17 +11,6 @@ from Queue import Queue
 
 import time
 
-d = Downloader()
-
-urlQueue = QueueManager()
-
-#Seed the queueManager if some initial url
-#URL for gameTrader
-f = open("./seed.txt")
-
-for line in f:
-    urlQueue.put(line)
-
 def processResults():
     parser = Parser()
     db = Database()
@@ -79,6 +68,17 @@ def processResults():
                 print datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ': Database insertion error 3'
 
 if __name__ == '__main__':
+
+    d = Downloader()
+
+    urlQueue = QueueManager()
+
+    #Seed the queueManager if some initial url
+    #URL for gameTrader
+    f = open("./seed.txt")
+
+    for line in f:
+        urlQueue.put(line)
 
     resultProcessor = Thread(target=processResults)
 
