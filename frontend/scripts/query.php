@@ -73,7 +73,6 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$stmt = $conn->prepare($query);
 if($numParams>0) call_user_func_array(array($stmt, 'bind_param'), $bindParams);
 $stmt->execute();
 $result = $stmt->get_result();
